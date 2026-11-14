@@ -1,0 +1,1391 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Estúdio de Banco de Dados</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: barra de módulos no topo; cada módulo = enunciado/atributos à esquerda + área de trabalho à direita; empilha no celular */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --ink:#18212b; --muted:#5b6876; --line:#d5dce3;
+  --accent:#2457a6; --accent-soft:#e3ecf8; --pk:#9a5b00; --pk-soft:#fff1d6; --fk:#6b4fa3; --fk-soft:#eee8f8; --grp:#eef2f7; --grid:#e6eaef;
+  --ok:#1e7a45; --ok-soft:#e1f3e8; --err:#b3261e; --err-soft:#fbe5e3; --hint:#6b4fa3; --hint-soft:#eee8f8;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --ink:#e4e9ee; --muted:#98a5b3; --line:#2c3743;
+  --accent:#7aa7ea; --accent-soft:#1d2d44; --pk:#f0b45a; --pk-soft:#3a2b12; --fk:#c0a8ef; --fk-soft:#2a2240; --grp:#1f2934; --grid:#1c242d;
+  --ok:#6fcf97; --ok-soft:#163223; --err:#f2918a; --err-soft:#3d1c1a; --hint:#c0a8ef; --hint-soft:#2a2240; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e4e9ee; --muted:#98a5b3; --line:#2c3743;
+  --accent:#7aa7ea; --accent-soft:#1d2d44; --pk:#f0b45a; --pk-soft:#3a2b12; --fk:#c0a8ef; --fk-soft:#2a2240; --grp:#1f2934; --grid:#1c242d;
+  --ok:#6fcf97; --ok-soft:#163223; --err:#f2918a; --err-soft:#3d1c1a; --hint:#c0a8ef; --hint-soft:#2a2240; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header.top{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between}
+h1{font-size:1.4rem;margin:0;letter-spacing:-.01em}
+h2{font-size:1.15rem;margin:0 0 4px;text-wrap:balance}
+h3{font-size:1rem;margin:14px 0 6px}
+nav.mods{display:flex;flex-wrap:wrap;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:4px}
+nav.mods a{padding:6px 12px;border-radius:6px;color:var(--muted);text-decoration:none;font-weight:600;font-size:.9rem}
+nav.mods a[aria-current="page"]{background:var(--accent);color:var(--surface)}
+select,button,input,textarea{font:inherit;color:inherit}
+select,input[type=text],textarea{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 9px;max-width:100%}
+button{cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--surface);padding:6px 12px;font-weight:500}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+button.on{background:var(--accent-soft);border-color:var(--accent)}
+button:disabled{opacity:.55;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:minmax(0,330px) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.mainc{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;min-width:0}
+.label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin:0 0 6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row-c{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.muted{color:var(--muted)} .small{font-size:.82rem}
+.case-text{white-space:pre-wrap;font-size:.9rem;margin:0;max-height:340px;overflow:auto}
+.pool{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--mono);font-size:.78rem;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 9px;cursor:grab;user-select:none;touch-action:manipulation}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 1px var(--accent)}
+.chip .n{font-size:.68rem;color:var(--muted)}
+.chip.unused{border-style:dashed}
+.hint-s{font-size:.8rem;color:var(--muted);margin:8px 0 0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.tab{border:1px solid transparent;border-bottom:0;border-radius:6px 6px 0 0;background:transparent;padding:7px 14px;color:var(--muted);font-weight:600;margin-bottom:-1px}
+.tab[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink)}
+.tab .st{font-size:.72rem;color:var(--ok);margin-left:4px}
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.tbl{background:var(--surface);border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;min-width:0}
+.tbl.over,.tbl.target{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.tbl-h{display:flex;gap:6px;align-items:center;padding:7px 7px 7px 10px;border-bottom:1px solid var(--line);background:var(--bg);border-radius:8px 8px 0 0}
+.tbl-h input{flex:1;min-width:0;border:0;background:transparent;font-family:var(--mono);font-weight:600;text-transform:uppercase;font-size:.82rem;padding:3px 4px;border-radius:4px}
+.tbl-h input:focus{background:var(--surface)}
+.x{border:0;background:transparent;padding:2px 6px;color:var(--muted);font-size:1rem;line-height:1}
+.x:hover{color:var(--err)}
+.rows{display:flex;flex-direction:column;padding:6px;gap:2px;min-height:60px}
+.trow{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:.8rem;padding:3px 5px;border-radius:4px;cursor:grab;flex-wrap:wrap}
+.trow:hover{background:var(--bg)}
+.tg{font-size:.64rem;font-weight:600;border:1px solid var(--line);border-radius:4px;padding:0 5px;color:var(--muted);background:transparent;cursor:pointer;line-height:1.5}
+.tg.pk[aria-pressed="true"]{color:var(--pk);border-color:var(--pk);background:var(--pk-soft)}
+.tg.fk[aria-pressed="true"]{color:var(--fk);border-color:var(--fk);background:var(--fk-soft)}
+.trow.ispk .nm{text-decoration:underline;text-underline-offset:3px;font-weight:600}
+.trow .nm{flex:1;min-width:0;overflow-wrap:anywhere}
+.trow select{font-size:.72rem;padding:1px 4px;flex-basis:100%;margin-left:42px}
+.empty{color:var(--muted);font-size:.8rem;padding:10px 6px;text-align:center}
+.add{border:1px dashed var(--line);background:transparent;border-radius:8px;min-height:110px;color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.fb{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.fb li{padding:7px 10px;border-radius:6px;font-size:.88rem;border-left:3px solid}
+.fb .ok{background:var(--ok-soft);border-color:var(--ok)} .fb .erro{background:var(--err-soft);border-color:var(--err)} .fb .dica{background:var(--hint-soft);border-color:var(--hint)}
+.score{font-weight:600;margin:0 0 8px}
+.claude{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;margin-top:10px;font-size:.9rem}
+.sol{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:8px 0}
+.sol div{font-family:var(--mono);font-size:.78rem;border:1px solid var(--line);border-radius:6px;padding:8px;overflow-wrap:anywhere}
+.sol b{display:block;margin-bottom:4px}
+.sol u{text-underline-offset:3px}
+.tag{font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:1px 8px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
+table.data{border-collapse:collapse;font-family:var(--mono);font-size:.78rem;min-width:100%}
+.data th,.data td{border:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top;white-space:nowrap}
+.data th{background:var(--bg);font-weight:600}
+.data th.g,.data td.g{background:var(--grp)} .data th.d{color:var(--muted);font-style:italic}
+.data td .v{display:block;line-height:1.7}
+.data tr:first-child th{border-top:0} .data th:first-child,.data td:first-child{border-left:0}
+.notation{font-family:var(--mono);font-size:.78rem;color:var(--muted);margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+/* teoria */
+.theory details{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:0 14px}
+.theory summary{cursor:pointer;font-weight:600;padding:12px 0}
+.theory details[open] summary{border-bottom:1px solid var(--line);margin-bottom:8px}
+.theory .body{padding-bottom:12px;max-width:80ch}
+.theory table{border-collapse:collapse;font-size:.86rem;margin:6px 0;width:100%}
+.theory th,.theory td{border:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+.theory th{background:var(--bg)}
+.tscroll{overflow-x:auto}
+pre.code{font-family:var(--mono);font-size:.8rem;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;overflow-x:auto;margin:6px 0}
+blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0}
+/* DER */
+.der-wrap{position:relative;overflow:auto;border:1px solid var(--line);border-radius:8px;background-color:var(--surface);background-image:radial-gradient(var(--grid) 1px,transparent 1px);background-size:18px 18px;height:620px}
+@media (max-width:860px){.der-wrap{height:480px}}
+.canvas{position:relative;width:1500px;height:1000px}
+.canvas svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.canvas svg line{stroke:var(--ink);stroke-width:1.4}
+.canvas svg text{fill:var(--ink);font:600 12px var(--mono)}
+.node{position:absolute;touch-action:none;user-select:none;cursor:move}
+.ent{min-width:140px;background:var(--surface);border:1.5px solid var(--ink);border-radius:2px}
+.ent.assoc{outline:1.5px solid var(--ink);outline-offset:3px}
+.ent-h{font-family:var(--mono);font-weight:600;font-size:.82rem;padding:5px 8px;border-bottom:1px solid var(--line);display:flex;gap:6px;align-items:center;text-transform:uppercase}
+.ent.assoc .ent-h::before{content:"";width:10px;height:10px;border:1.5px solid var(--ink);transform:rotate(45deg);flex:none}
+.ent ul{list-style:none;margin:0;padding:4px 8px 6px;font-family:var(--mono);font-size:.74rem}
+.ent li.id{text-decoration:underline;text-underline-offset:3px;font-weight:600}
+.ent li.ph{color:var(--muted);font-style:italic}
+.rel{transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center}
+.rel .dia{width:104px;height:52px;position:relative;display:grid;place-items:center}
+.rel .dia svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.rel .dia svg polygon{fill:var(--surface);stroke:var(--ink);stroke-width:1.5}
+.rel .dia span{position:relative;font-family:var(--mono);font-size:.72rem;font-weight:600;max-width:70px;text-align:center;line-height:1.1;overflow-wrap:anywhere}
+.rel .rattrs{font-family:var(--mono);font-size:.7rem;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:4px;padding:1px 6px;margin-top:2px;max-width:180px;text-align:center}
+.gen{transform:translate(-50%,-50%);width:58px;height:44px;display:grid;place-items:end center;padding-bottom:6px;font-family:var(--mono);font-size:.7rem;font-weight:600}
+.gen svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.gen svg polygon{fill:var(--surface);stroke:var(--ink);stroke-width:1.5}
+.gen span{position:relative}
+.node.sel .ent-h,.node.sel.ent{box-shadow:0 0 0 2px var(--accent)}
+.node.sel .dia svg polygon,.node.sel svg polygon{stroke:var(--accent);stroke-width:3}
+.node.pickable{outline:2px dashed var(--accent);outline-offset:4px}
+.node.drop{box-shadow:0 0 0 3px var(--accent)}
+.status{font-size:.86rem;padding:6px 10px;border-radius:6px;background:var(--accent-soft);border:1px solid var(--accent)}
+.panel .prow{display:flex;gap:6px;align-items:center;font-family:var(--mono);font-size:.8rem;padding:3px 0;flex-wrap:wrap}
+.panel .prow .nm{flex:1;min-width:0}
+.panel label.f{display:flex;flex-direction:column;gap:3px;font-size:.84rem;margin:6px 0}
+.panel input[type=text]{width:100%}
+/* SQL */
+textarea.sql{width:100%;min-height:150px;font-family:var(--mono);font-size:.85rem;line-height:1.5;resize:vertical}
+.schema{font-family:var(--mono);font-size:.78rem}
+.schema div{margin:3px 0}
+.err-box{color:var(--err);font-family:var(--mono);font-size:.82rem;white-space:pre-wrap}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Estúdio de Banco de Dados</h1>
+      <p class="muted small" style="margin:0">Teoria e prática de modelagem, normalização e SQL, com o conteúdo do Prof. Ricardo Satoshi.</p>
+    </div>
+    <nav class="mods" id="nav">
+      <a href="#teoria">Teoria</a><a href="#conceitual">Conceitual (DER)</a><a href="#logico">Lógico</a><a href="#normalizacao">Normalização</a><a href="#sql">SQL</a>
+    </nav>
+  </header>
+
+  <!-- TEORIA -->
+  <section id="v-teoria" class="theory" hidden style="display:flex;flex-direction:column;gap:10px">
+    <details open><summary>1. Níveis de modelagem</summary><div class="body">
+      <p>A ordem é sempre <b>Conceitual → Lógico → Físico</b>.</p>
+      <div class="tscroll"><table><tr><th>Nível</th><th>O que descreve</th><th>Depende do SGBD?</th></tr>
+      <tr><td>Conceitual (MCD)</td><td>A realidade do problema: entidades, atributos e relacionamentos (DER)</td><td>Não</td></tr>
+      <tr><td>Lógico (MLD)</td><td>As estruturas do banco: tabelas, chaves primárias e estrangeiras</td><td>Não</td></tr>
+      <tr><td>Físico (MFD)</td><td>Tipos, tamanhos, índices: o script SQL do SGBD usado</td><td>Sim</td></tr></table></div>
+      <p><a href="#conceitual">Treinar o conceitual</a> · <a href="#logico">Treinar o lógico</a> · <a href="#sql">Treinar o físico (SQL)</a></p>
+    </div></details>
+    <details><summary>2. Modelo Entidade-Relacionamento (DER)</summary><div class="body">
+      <p><b>Entidade:</b> conjunto de objetos sobre os quais guardamos informações. <b>Forte</b> existe sozinha (CLIENTE, PRODUTO); <b>fraca</b> depende de outra (ITEMPEDIDO precisa de PEDIDO, DEPENDENTE precisa de FUNCIONÁRIO).</p>
+      <div class="tscroll"><table><tr><th>Atributo</th><th>Definição</th><th>Exemplo</th></tr>
+      <tr><td>Chave (identificador)</td><td>Identifica cada ocorrência; vem <u>sublinhado</u></td><td>matrícula</td></tr>
+      <tr><td>Composto</td><td>Pode ser dividido em sub-atributos</td><td>endereço (rua, nº, CEP)</td></tr>
+      <tr><td>Multivalorado</td><td>Mais de um valor; marcado com *</td><td>telefone, e-mail</td></tr>
+      <tr><td>Derivado</td><td>Calculado a partir de outros</td><td>idade, total de vendas</td></tr>
+      <tr><td>Artificial</td><td>Criado para identificar</td><td>código do funcionário</td></tr></table></div>
+      <p><b>Relacionamento:</b> losango, nomeado por um verbo (a regra de negócio). <b>Cardinalidade</b>, sempre perguntando dos dois lados: "cada FORNECEDOR fornece quantas MARCAS?" e "cada MARCA é fornecida por quantos FORNECEDORES?".</p>
+      <div class="tscroll"><table><tr><th>Classe</th><th>Exemplo da aula</th></tr>
+      <tr><td>1:1</td><td>PRESIDENTE governa PAÍS</td></tr><tr><td>1:N</td><td>FORNECEDOR fornece MARCA</td></tr><tr><td>N:N</td><td>ALUNO tem aulas com PROFESSOR</td></tr></table></div>
+      <p><b>Autorrelacionamento:</b> entre ocorrências da mesma entidade (funcionário supervisiona funcionário).</p>
+      <p><b>Generalização/especialização (ISA = "é um"):</b> MOTORISTA, SECRETÁRIA e ENGENHEIRO são FUNC; herdam RG, Nome e Data Admissão e têm atributos próprios. Na plataforma: botão <i>+ Generalização</i>.</p>
+      <p><b>Entidade associativa (agregação):</b> um relacionamento tratado como entidade (losango dentro do retângulo), quando ele precisa se ligar a outra entidade. Nome geralmente é um substantivo. Na plataforma: marque "associativa" na entidade.</p>
+      <p><b>Passos do DER:</b> conhecer o negócio → entidades → atributos → relacionamentos → atributos de relacionamento → desenhar → revisar restrições → repetir.</p>
+    </div></details>
+    <details><summary>3. Modelo lógico (conversão)</summary><div class="body">
+      <div class="tscroll"><table><tr><th>Conceitual</th><th>Lógico</th></tr><tr><td>Entidade</td><td>Tabela</td></tr><tr><td>Atributo</td><td>Coluna</td></tr><tr><td>Identificador</td><td>Chave primária (PK)</td></tr><tr><td>Relacionamento</td><td>Chave estrangeira (FK)</td></tr></table></div>
+      <div class="tscroll"><table><tr><th>Caso</th><th>Regra</th></tr>
+      <tr><td>Entidade</td><td>Vira tabela; o identificador vira PK</td></tr>
+      <tr><td>1:1</td><td>A FK vai em uma das tabelas (a de maior acesso), junto com os atributos do relacionamento</td></tr>
+      <tr><td>1:N</td><td>A FK vai na tabela do lado <b>N</b>, apontando para a PK do lado 1; atributos do relacionamento também vão no lado N</td></tr>
+      <tr><td>N:N</td><td>Nova tabela com PK composta pelas duas PKs (que também são FKs) e os atributos do relacionamento; vira dois 1:N</td></tr>
+      <tr><td>Multivalorado</td><td>Nova tabela com a PK da entidade + o valor (como cliente_telefone)</td></tr></table></div>
+      <p class="small muted">Generalização não aparece nas regras da aula; na plataforma a resposta usa uma tabela por subclasse (com a PK da superclasse) e também aceita uma tabela única.</p>
+    </div></details>
+    <details><summary>4. Normalização (1FN, 2FN, 3FN)</summary><div class="body">
+      <p>Objetivo: tirar redundância e evitar anomalias de <b>inserção</b>, <b>atualização</b> e <b>exclusão</b>.</p>
+      <div class="tscroll"><table><tr><th>Forma</th><th>Pergunta</th><th>O que fazer</th></tr>
+      <tr><td>1FN</td><td>Repete? (grupo repetitivo, multivalorado, composto)</td><td>Separar o "dono" que se repete; o resto leva a chave dele e fica com chave composta. Derivado sai.</td></tr>
+      <tr><td>2FN</td><td>Depende de metade da chave composta?</td><td>Levar para a tabela daquela parte da chave</td></tr>
+      <tr><td>3FN</td><td>Depende de outro atributo que não é chave?</td><td>Levar para a tabela desse atributo, que fica como FK</td></tr></table></div>
+      <blockquote>A chave, a chave toda, e só a chave.</blockquote>
+      <p><a href="#normalizacao">Treinar normalização</a></p>
+    </div></details>
+    <details><summary>5. SQL – DDL (criar a estrutura)</summary><div class="body">
+<pre class="code">CREATE TABLE ItemNota (
+  NumeroNota numeric(10),
+  CodProduto int,
+  Quant int NOT NULL CHECK (Quant > 0),
+  PRIMARY KEY (NumeroNota, CodProduto),
+  FOREIGN KEY (NumeroNota) REFERENCES NotaFiscal(NumeroNota),
+  FOREIGN KEY (CodProduto) REFERENCES Produto(CodProduto)
+);
+ALTER TABLE TabAluno ADD notaexame numeric(10,2);
+ALTER TABLE TabAluno MODIFY nome varchar(100);      -- muda tipo/tamanho
+ALTER TABLE TabAluno CHANGE nome nomealuno varchar(35); -- renomeia
+DROP TABLE TabAluno;</pre>
+      <p>Características: AUTO_INCREMENT (só na PK), NOT NULL, PRIMARY KEY, UNIQUE, DEFAULT, CHECK. DDL = CREATE/ALTER/DROP; DML = INSERT/SELECT/UPDATE/DELETE; DCL = GRANT/REVOKE.</p>
+    </div></details>
+    <details><summary>6. SQL – DML e consultas</summary><div class="body">
+<pre class="code">INSERT INTO tabalunos (nome, curso) VALUES ("Maria", "ADS");
+UPDATE tabalunos SET nota2 = nota2 + 0.5 WHERE nota1 &lt; 8;
+DELETE FROM tabalunos WHERE matricula = 20;
+SELECT nome, (nota1+nota2)/2 AS Media FROM tabalunos
+ WHERE curso IN ("ADS","COM") AND nome LIKE "M%"
+ ORDER BY nome DESC;
+SELECT curso, COUNT(*) FROM tabalunos GROUP BY curso HAVING COUNT(*) > 3;</pre>
+      <p>WHERE filtra linhas antes de agrupar; HAVING filtra grupos. COUNT(*) conta linhas; COUNT(coluna) ignora nulos. BETWEEN inclui os extremos. Use IS NULL, nunca = NULL.</p>
+    </div></details>
+    <details><summary>7. JOINs</summary><div class="body">
+<pre class="code">SELECT NomeFunc, NomeDepto FROM Funcionario INNER JOIN Depto ON DeptoFunc = NumDepto; -- só quem combina
+SELECT NomeFunc, NomeDepto FROM Funcionario LEFT JOIN Depto ON DeptoFunc = NumDepto;  -- todos da 1ª
+SELECT NomeFunc, NomeDepto FROM Funcionario RIGHT JOIN Depto ON DeptoFunc = NumDepto; -- todos da 2ª
+SELECT f1.NomeFunc, f2.NomeFunc AS Supervisor            -- autorrelacionamento
+FROM Funcionario f1 INNER JOIN Funcionario f2 ON f1.supervisor = f2.IdFunc;</pre>
+    </div></details>
+    <details><summary>8. Subconsultas</summary><div class="body">
+<pre class="code">SELECT * FROM EMP WHERE esal = (SELECT MAX(esal) FROM EMP);           -- valor único
+SELECT empno, enome FROM EMP e WHERE EXISTS (SELECT * FROM FONES_EMP f WHERE e.empno = f.empno);
+DELETE FROM DEPTO WHERE deptno NOT IN (SELECT DISTINCT deptno FROM EMP);
+UPDATE EMP SET esal = esal*1.1 WHERE deptno = (SELECT deptno FROM DEPTO WHERE dnome = 'compras');
+INSERT INTO GERENTE SELECT empno, enome, esal FROM EMP WHERE efuncao = 'gerente';</pre>
+      <p>IN = "= ANY"; NOT IN = "&lt;&gt; ALL"; ANY = algum (OU); ALL = todos (E). Com "=", a subconsulta precisa devolver uma linha só. MySQL não tem EXCEPT/INTERSECT: use NOT IN e IN.</p>
+    </div></details>
+  </section>
+
+  <!-- CONCEITUAL -->
+  <section id="v-conceitual" hidden>
+    <div class="grid">
+      <aside class="side">
+        <section class="card">
+          <p class="label">Caso</p>
+          <div class="row-c"><select id="c-case" style="flex:1"></select></div>
+          <div class="row-c" style="margin-top:8px"><button id="c-gen" class="needs-claude" hidden>Gerar caso novo com o Claude</button></div>
+          <p id="c-genmsg" class="muted small" hidden></p>
+          <p class="case-text" id="c-text" style="margin-top:10px"></p>
+        </section>
+        <section class="card">
+          <p class="label">Atributos do caso</p>
+          <div class="pool" id="c-pool"></div>
+          <p class="hint-s">Arraste para uma entidade ou relacionamento, ou toque no atributo e depois no elemento do diagrama.</p>
+        </section>
+        <section class="card panel" id="c-panel"></section>
+      </aside>
+      <div class="mainc">
+        <div class="actions">
+          <button id="c-addent">+ Entidade</button>
+          <button id="c-addrel">+ Relacionamento</button>
+          <button id="c-addgen">+ Generalização</button>
+          <span style="flex:1"></span>
+          <button id="c-clear">Limpar diagrama</button>
+        </div>
+        <div class="status" id="c-status" hidden></div>
+        <div class="der-wrap" id="c-wrap"><div class="canvas" id="c-canvas"><svg id="c-svg" aria-hidden="true"></svg></div></div>
+        <div class="actions">
+          <button class="primary" id="c-check">Corrigir</button>
+          <button id="c-ask" class="needs-claude" hidden>Comentar com o Claude</button>
+          <button id="c-show">Ver gabarito</button>
+        </div>
+        <section class="card" id="c-fbcard" hidden><p class="score" id="c-score"></p><ul class="fb" id="c-fb"></ul><div class="claude" id="c-claude" hidden></div></section>
+        <section class="card" id="c-solcard" hidden><p class="label">Gabarito do DER</p><div id="c-sol"></div></section>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOGICO -->
+  <section id="v-logico" hidden>
+    <div class="grid">
+      <aside class="side">
+        <section class="card">
+          <p class="label">Caso</p>
+          <select id="l-case" style="width:100%"></select>
+          <p class="case-text" id="l-text" style="margin-top:10px"></p>
+        </section>
+        <section class="card">
+          <p class="label">Colunas</p>
+          <div class="pool" id="l-pool"></div>
+          <p class="hint-s">Monte as tabelas. <b>PK</b> marca a chave primária; <b>FK</b> marca a chave estrangeira e pede a tabela de destino. A mesma coluna pode ir em várias tabelas.</p>
+        </section>
+      </aside>
+      <div class="mainc">
+        <p class="muted small" style="margin:0">Converta o caso para o modelo lógico: entidade vira tabela, 1:N põe FK no lado N, N:N vira tabela com PK composta, multivalorado vira tabela própria.</p>
+        <div class="board" id="l-board"></div>
+        <div class="actions">
+          <button class="primary" id="l-check">Corrigir</button>
+          <button id="l-ask" class="needs-claude" hidden>Comentar com o Claude</button>
+          <button id="l-show">Ver gabarito</button>
+          <button id="l-reset">Limpar</button>
+        </div>
+        <section class="card" id="l-fbcard" hidden><p class="score" id="l-score"></p><ul class="fb" id="l-fb"></ul><div class="claude" id="l-claude" hidden></div></section>
+        <section class="card" id="l-solcard" hidden><p class="label">Gabarito do lógico</p><div class="sol" id="l-sol"></div><p class="small muted" id="l-alt"></p></section>
+      </div>
+    </div>
+  </section>
+
+  <!-- NORMALIZACAO -->
+  <section id="v-normalizacao" hidden>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="row-c">
+        <label for="n-ex" class="muted small">Exercício</label>
+        <select id="n-ex"></select>
+        <button id="n-gen" class="needs-claude" hidden>Gerar exercício novo com o Claude</button>
+        <span id="n-genmsg" class="muted small" hidden></span>
+      </div>
+      <section class="card">
+        <p class="label">Tabela original (não normalizada) <span id="n-lvl" class="tag"></span></p>
+        <div class="scroll" id="n-orig"></div>
+        <p class="notation" id="n-unf"></p>
+      </section>
+      <div class="grid">
+        <aside class="side">
+          <section class="card"><p class="label">Regras do negócio</p><ul id="n-rules" style="margin:0;padding-left:18px"></ul></section>
+          <section class="card"><p class="label">Atributos</p><div class="pool" id="n-pool"></div>
+            <p class="hint-s">Um atributo pode ir para mais de uma tabela (chave estrangeira). Derivado sai já na 1FN.</p></section>
+        </aside>
+        <div class="mainc">
+          <div class="tabs" role="tablist" id="n-tabs"></div>
+          <div class="row-c" style="justify-content:space-between"><p id="n-goal" class="muted small" style="margin:0;max-width:62ch"></p><button id="n-copy" hidden></button></div>
+          <div class="board" id="n-board"></div>
+          <div class="actions">
+            <button class="primary" id="n-check">Corrigir</button>
+            <button id="n-ask" class="needs-claude" hidden>Pedir explicação ao Claude</button>
+            <button id="n-show">Ver solução desta etapa</button>
+            <button id="n-reset">Limpar esta etapa</button>
+          </div>
+          <section class="card" id="n-fbcard" hidden><p class="score" id="n-score"></p><ul class="fb" id="n-fb"></ul><div class="claude" id="n-claude" hidden></div></section>
+          <section class="card" id="n-solcard" hidden><p class="label" id="n-soltitle"></p><div class="sol" id="n-sol"></div><p id="n-steps" style="margin:0"></p></section>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SQL -->
+  <section id="v-sql" hidden>
+    <div class="grid">
+      <aside class="side">
+        <section class="card">
+          <p class="label">Exercício</p>
+          <select id="s-ex" style="width:100%"></select>
+          <p id="s-enun" style="margin:10px 0 0"></p>
+        </section>
+        <section class="card">
+          <p class="label">Banco <span class="tag" id="s-dbname"></span></p>
+          <div class="schema" id="s-schema"></div>
+        </section>
+        <section class="card small muted">O simulador roda <b>SQLite</b> no navegador, com os dados das aulas. Funciona: CREATE, ALTER ... ADD, INSERT, UPDATE, DELETE, SELECT, JOINs (inclusive RIGHT) e subconsultas com IN, EXISTS e comparação. <b>Não funciona aqui:</b> ANY/ALL, MODIFY/CHANGE e funções de data do MySQL; para juntar texto use <code>||</code> no lugar de CONCAT.</section>
+      </aside>
+      <div class="mainc">
+        <p class="muted small" id="s-loading">Carregando o banco de dados…</p>
+        <label for="s-sql" class="label">Seu SQL</label>
+        <textarea id="s-sql" class="sql" spellcheck="false" placeholder="SELECT ..."></textarea>
+        <div class="actions">
+          <button id="s-run">Executar</button>
+          <button class="primary" id="s-check">Conferir</button>
+          <button id="s-ask" class="needs-claude" hidden>Explicar com o Claude</button>
+          <button id="s-show">Ver resposta</button>
+        </div>
+        <section class="card" id="s-out" hidden></section>
+        <section class="card" id="s-fbcard" hidden><p class="score" id="s-score"></p><ul class="fb" id="s-fb"></ul><div class="claude" id="s-claude" hidden></div></section>
+        <section class="card" id="s-solcard" hidden><p class="label">Uma resposta possível</p><pre class="code" id="s-sol"></pre></section>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="sql-asm.js"></script>
+<script>
+/* ================= utilidades ================= */
+const $ = id => document.getElementById(id);
+const el = (tag, props={}, ...kids) => { const e=document.createElement(tag); for(const [k,v] of Object.entries(props)){ if(k==="dataset") Object.assign(e.dataset,v); else if(k in e) e[k]=v; else e.setAttribute(k,v);} kids.forEach(k=>e.append(k)); return e; };
+const list = a => a.join(", ");
+const sortKey = a => [...a].sort().join("|");
+const clone = o => JSON.parse(JSON.stringify(o));
+const norm = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase().trim();
+let UID = 1; const uid = p => p + (UID++) + Math.random().toString(36).slice(2,5);
+// shortcut: progresso e casos gerados ficam só neste navegador (localStorage); trocar por db se precisar entre aparelhos
+const store = { get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}}, set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}} };
+const S = (n,sing,plur) => n===1?sing:plur;
+
+function feedback(prefix, r, okMsg){
+  $(prefix+"-fbcard").hidden=false; $(prefix+"-claude").hidden=true;
+  $(prefix+"-score").textContent = r.perfect ? okMsg : r.scoreText;
+  $(prefix+"-score").style.color = r.perfect ? "var(--ok)" : "";
+  const items = r.out.length ? r.out : [["dica","Monte alguma coisa para corrigir."]];
+  $(prefix+"-fb").replaceChildren(...items.map(([k,m])=>el("li",{className:k,textContent:m})));
+}
+
+/* ================= Claude (sample) ================= */
+let SAMPLE = null;
+async function initClaude(){
+  try{ SAMPLE = await window.claude?.use?.("sample"); }catch{ SAMPLE=null; }
+  document.querySelectorAll(".needs-claude").forEach(b=>b.hidden=!SAMPLE);
+}
+function claudeErr(e){
+  if(["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e?.code)){ document.querySelectorAll(".needs-claude").forEach(b=>b.hidden=true); return "O Claude não está disponível nesta visualização."; }
+  if(e?.code==="rate_limited") return "Muitos pedidos seguidos. Espere um pouco e tente de novo.";
+  if(e?.code==="invalid_json") return "O Claude devolveu um caso inconsistente. Tente gerar de novo.";
+  return "Não deu para falar com o Claude agora. Tente de novo.";
+}
+async function askClaude(prefix, prompt, btn){
+  const box=$(prefix+"-claude"); $(prefix+"-fbcard").hidden=false; box.hidden=false; box.textContent="Pensando..."; btn.disabled=true;
+  try{ await SAMPLE(prompt,{onText:({text})=>{box.textContent=text;}}); }
+  catch(e){ box.textContent = e?.text || claudeErr(e); }
+  finally{ btn.disabled=false; }
+}
+
+/* ================= quadro de tabelas (lógico e normalização) ================= */
+function TableBoard(o){ // o: {board, pool, attrs(), get(), set(arr), fk, onChange}
+  let selected=null;
+  const newTable = () => ({id:uid("t"),nome:"",attrs:[],pk:[],fk:{}});
+  function put(attr, tid, fromId){
+    const tbls=o.get(), t=tbls.find(x=>x.id===tid); if(!t) return;
+    if(fromId && fromId!==tid){ const f=tbls.find(x=>x.id===fromId); if(f){ f.attrs=f.attrs.filter(a=>a!==attr); f.pk=f.pk.filter(a=>a!==attr); delete f.fk[attr]; } }
+    if(!t.attrs.includes(attr)) t.attrs.push(attr);
+    changed();
+  }
+  function changed(){ o.onChange?.(); render(); }
+  function dragData(e, attr, from){ e.dataTransfer.setData("text/plain", JSON.stringify({attr,from})); e.dataTransfer.effectAllowed="copyMove"; }
+  function render(){
+    const tbls=o.get(), count={};
+    tbls.forEach(t=>t.attrs.forEach(a=>count[a]=(count[a]||0)+1));
+    o.pool.replaceChildren(...o.attrs().map(a=>{
+      const c=el("button",{className:"chip"+(count[a]?"":" unused"),draggable:true,type:"button"}, a);
+      if(count[a]>1) c.append(el("span",{className:"n",textContent:"×"+count[a]}));
+      c.setAttribute("aria-pressed", selected===a);
+      c.onclick=()=>{ selected = selected===a?null:a; render(); };
+      c.ondragstart=e=>dragData(e,a,null);
+      return c;
+    }));
+    const tname = t => (t.nome||"").trim() || ("Tabela "+(tbls.indexOf(t)+1));
+    const cards = tbls.map(t=>{
+      const name=el("input",{value:t.nome,placeholder:"NOME_DA_TABELA",id:"nm-"+t.id,"aria-label":"Nome da tabela"});
+      name.oninput=()=>{ t.nome=name.value; o.onChange?.(); };
+      name.onchange=()=>render();
+      const del=el("button",{className:"x",type:"button",title:"Excluir tabela",textContent:"×"});
+      del.onclick=()=>{ o.set(tbls.filter(x=>x!==t)); tbls.forEach(x=>Object.keys(x.fk).forEach(a=>{ if(x.fk[a]===t.id) delete x.fk[a]; })); changed(); };
+      const rows=el("div",{className:"rows"});
+      if(!t.attrs.length) rows.append(el("div",{className:"empty",textContent:selected?"Toque aqui para adicionar "+selected:"Solte colunas aqui"}));
+      t.attrs.forEach(a=>{
+        const isPk=t.pk.includes(a), isFk=a in t.fk;
+        const pkb=el("button",{className:"tg pk",type:"button",textContent:"PK",title:"Chave primária"});
+        pkb.setAttribute("aria-pressed",isPk);
+        pkb.onclick=e=>{ e.stopPropagation(); t.pk=isPk?t.pk.filter(x=>x!==a):[...t.pk,a]; changed(); };
+        const row=el("div",{className:"trow"+(isPk?" ispk":""),draggable:true}, pkb);
+        if(o.fk){
+          const fkb=el("button",{className:"tg fk",type:"button",textContent:"FK",title:"Chave estrangeira"});
+          fkb.setAttribute("aria-pressed",isFk);
+          fkb.onclick=e=>{ e.stopPropagation(); if(isFk) delete t.fk[a]; else t.fk[a]=""; changed(); };
+          row.append(fkb);
+        }
+        const rm=el("button",{className:"x",type:"button",textContent:"×",title:"Tirar desta tabela"});
+        rm.onclick=e=>{ e.stopPropagation(); t.attrs=t.attrs.filter(x=>x!==a); t.pk=t.pk.filter(x=>x!==a); delete t.fk[a]; changed(); };
+        row.append(el("span",{className:"nm",textContent:a}), rm);
+        if(o.fk && isFk){
+          const s=el("select",{"aria-label":"Tabela de destino da FK "+a});
+          s.append(el("option",{value:"",textContent:"→ aponta para…"}), ...tbls.filter(x=>x!==t).map(x=>el("option",{value:x.id,textContent:"→ "+tname(x)})));
+          s.value=t.fk[a]||""; s.onclick=e=>e.stopPropagation();
+          s.onchange=()=>{ t.fk[a]=s.value; o.onChange?.(); };
+          row.append(s);
+        }
+        row.ondragstart=e=>dragData(e,a,t.id);
+        rows.append(row);
+      });
+      const card=el("div",{className:"tbl"+(selected?" target":"")}, el("div",{className:"tbl-h"},name,del), rows);
+      card.onclick=e=>{ if(selected && !e.target.closest("input,button,select")) put(selected,t.id,null); };
+      card.ondragover=e=>{e.preventDefault(); card.classList.add("over");};
+      card.ondragleave=()=>card.classList.remove("over");
+      card.ondrop=e=>{ e.preventDefault(); card.classList.remove("over"); try{ const d=JSON.parse(e.dataTransfer.getData("text/plain")); put(d.attr,t.id,d.from); }catch{} };
+      return card;
+    });
+    const add=el("button",{className:"add",type:"button",textContent:"+ Nova tabela"});
+    add.onclick=()=>{ tbls.push(newTable()); changed(); };
+    o.board.replaceChildren(...cards, add);
+  }
+  return {render, newTable, deselect(){selected=null;}};
+}
+
+/* correção de tabelas: casa cada tabela pelo conjunto de colunas; confere PK e (no lógico) FKs */
+function gradeTables(tbls, sol, o={}){
+  const der=new Set(o.der||[]), out=[], label=o.label||"resposta";
+  const Sx=sol.map(t=>({...t,key:sortKey(t.attrs),pkKey:sortKey(t.pk)}));
+  const used=new Set(), match=new Map(); let ok=0;
+  const filled=tbls.filter(t=>t.attrs.length);
+  const nm=t=>(t.nome||"").trim()||"Tabela sem nome";
+  const cleanOf=t=>t.attrs.filter(a=>!der.has(a));
+  filled.forEach(t=>{ const i=Sx.findIndex((s,j)=>!used.has(j)&&s.key===sortKey(cleanOf(t))); if(i>=0){used.add(i);match.set(t.id,i);} });
+  filled.forEach(t=>{
+    const d=t.attrs.filter(a=>der.has(a));
+    if(d.length) out.push(["erro",`${nm(t)}: ${list(d)} é derivado (calculado a partir de outros atributos) e sai já na 1FN.`]);
+    const clean=cleanOf(t); if(!clean.length) return;
+    if(match.has(t.id)){
+      const s=Sx[match.get(t.id)], errs=[], upk=t.attrs.filter(a=>t.pk.includes(a));
+      if(sortKey(upk)!==s.pkKey){
+        if(!upk.length) errs.push("falta marcar a chave primária");
+        else if(upk.every(a=>s.pk.includes(a))) errs.push("a chave deveria ser composta (tem mais coluna nela)");
+        else if(s.pk.every(a=>upk.includes(a))) errs.push("a chave tem coluna demais");
+        else errs.push("a chave primária não é essa (qual coluna identifica cada linha?)");
+      }
+      if(o.fk){
+        const exp=s.fks||[], uf=t.fk||{};
+        exp.forEach(f=>{
+          if(!(f.attr in uf)) errs.push(`${f.attr} também é chave estrangeira (marque FK)`);
+          else if(!uf[f.attr]) errs.push(`escolha para qual tabela a FK ${f.attr} aponta`);
+          else { const gi=match.get(uf[f.attr]); if(gi===undefined) errs.push(`a tabela para onde ${f.attr} aponta ainda não está certa`); else if(Sx[gi].nome!==f.ref) errs.push(`a FK ${f.attr} aponta para a tabela errada`); }
+        });
+        Object.keys(uf).forEach(a=>{ if(t.attrs.includes(a)&&!exp.some(f=>f.attr===a)) errs.push(`${a} não é chave estrangeira nesta tabela`); });
+      }
+      if(errs.length) out.push(["erro",`${nm(t)}: colunas certas, mas ${errs.join("; ")}.`]);
+      else if(!d.length){ ok++; out.push(["ok",`${nm(t)}: colunas e chaves certas.`]); }
+      return;
+    }
+    if(Sx.some(s=>s.key===sortKey(clean))){ out.push(["erro",`${nm(t)}: repete outra tabela que você já montou.`]); return; }
+    let best=-1, bs=0;
+    Sx.forEach((s,j)=>{ const inter=clean.filter(a=>s.attrs.includes(a)).length; const sc=inter/new Set([...clean,...s.attrs]).size; if(sc>bs){bs=sc;best=j;} });
+    if(best<0){ out.push(["erro",`${nm(t)}: essas colunas não formam nenhuma tabela da ${label}.`]); return; }
+    const s=Sx[best], extra=clean.filter(a=>!s.attrs.includes(a)), falta=s.attrs.filter(a=>!clean.includes(a)), parts=[];
+    if(extra.length) parts.push(`${list(extra)} não deve${extra.length>1?"m":""} ficar nesta tabela na ${label}`);
+    if(falta.length) parts.push(`ainda falta${falta.length>1?"m":""} ${falta.length} coluna${falta.length>1?"s":""} aqui`);
+    out.push(["erro",`${nm(t)}: ${parts.join("; ")}.`]);
+  });
+  const placed=new Set(filled.flatMap(t=>t.attrs));
+  const solto=(o.attrs||[]).filter(a=>!der.has(a)&&!placed.has(a));
+  if(solto.length) out.push(["dica",`${list(solto)} ainda não ${solto.length>1?"estão":"está"} em nenhuma tabela.`]);
+  const missing=Sx.length-used.size;
+  if(missing>0 && filled.length) out.push(["dica",`A ${label} tem ${Sx.length} tabelas. Faltam ${missing} para acertar.`]);
+  const perfect = ok===Sx.length && filled.length===Sx.length && !out.some(x=>x[0]==="erro");
+  return {out, ok, total:Sx.length, perfect, scoreText:`${ok} de ${Sx.length} tabelas certas.`};
+}
+function gradeBest(tbls, sols, o){
+  let best=null;
+  for(const s of sols){ const r=gradeTables(tbls,s,o); if(!best||r.perfect>best.perfect||(r.perfect===best.perfect&&r.ok>best.ok)) best=r; }
+  return best;
+}
+// converte uma solução (fks por nome) em tabelas do quadro (fks por id), para os autotestes
+function asUserTables(sol){
+  const ts=sol.map(s=>({id:uid("t"),nome:s.nome,attrs:[...s.attrs],pk:[...s.pk],fk:{}}));
+  sol.forEach((s,i)=>(s.fks||[]).forEach(f=>{ ts[i].fk[f.attr]=ts[sol.findIndex(x=>x.nome===f.ref)].id; }));
+  return ts;
+}
+const fmtTable = t => `${t.nome}(${t.attrs.map(a=>(t.pk.includes(a)?a+"*":a)+((t.fks||[]).find(f=>f.attr===a)?"→"+t.fks.find(f=>f.attr===a).ref:"")).join(", ")})`;
+function solCards(target, sol){
+  target.replaceChildren(...sol.map(t=>{
+    const d=el("div",{},el("b",{textContent:t.nome}));
+    t.attrs.forEach((a,i)=>{ d.append(i?", ":""); d.append(t.pk.includes(a)?el("u",{textContent:a}):a); const f=(t.fks||[]).find(f=>f.attr===a); if(f) d.append(el("span",{className:"muted",textContent:` (FK→${f.ref})`})); });
+    return d;
+  }));
+}
+
+/* ================= CASOS (conceitual + lógico) ================= */
+const E = (nome, attrs, ids, multi=[]) => ({nome, attrs, ids, multi});
+const R = (nome, a, ca, b, cb, attrs=[]) => ({nome, a, ca, b, cb, attrs});
+const TB = (nome, attrs, pk, fks=[]) => ({nome, attrs, pk, fks:fks.map(([attr,ref])=>({attr,ref}))});
+const CASES_BASE = [
+{ id:"livraria", titulo:"Livraria (lista do professor)",
+  texto:`Uma livraria mantém o cadastro de livros disponíveis para a venda. Para cada livro são armazenados: código, nome, língua e ano em que foi escrito. Para os autores é mantido igualmente um cadastro que inclui nome, data de nascimento, país de nascimento e uma breve nota biográfica.
+
+Cada livro pode ter vários autores e para um mesmo autor podem existir vários livros cadastrados. Um autor pode estar incluído no cadastro ainda quando não exista um livro seu para venda.
+
+As editoras são incluídas no cadastro a partir do seu nome, endereço, telefone. Uma editora pode estar cadastrada mesmo quando não existam livros editados por ela em venda.
+
+Para um mesmo livro podem existir várias edições realizadas por editoras diferentes ou em anos diferentes. Cada edição tem um código (ISBN), preço, ano, número de páginas e quantidade em estoque.
+
+(Códigos artificiais CodAutor e CodEditora foram incluídos para identificar autores e editoras.)`,
+  der:{ entidades:[
+      E("LIVRO",["CodLivro","NomeLivro","Lingua","AnoEscrito"],["CodLivro"]),
+      E("AUTOR",["CodAutor","NomeAutor","DataNascAutor","PaisNascAutor","NotaBiografica"],["CodAutor"]),
+      E("EDITORA",["CodEditora","NomeEditora","EnderecoEditora","TelefoneEditora"],["CodEditora"]),
+      E("EDICAO",["ISBN","PrecoEdicao","AnoEdicao","NumPaginas","QtdEstoque"],["ISBN"])],
+    rels:[ R("escreve","AUTOR","N","LIVRO","N"), R("possui","LIVRO","1","EDICAO","N"), R("publica","EDITORA","1","EDICAO","N") ], gens:[] },
+  logico:{ tabelas:[
+      TB("LIVRO",["CodLivro","NomeLivro","Lingua","AnoEscrito"],["CodLivro"]),
+      TB("AUTOR",["CodAutor","NomeAutor","DataNascAutor","PaisNascAutor","NotaBiografica"],["CodAutor"]),
+      TB("LIVRO_AUTOR",["CodLivro","CodAutor"],["CodLivro","CodAutor"],[["CodLivro","LIVRO"],["CodAutor","AUTOR"]]),
+      TB("EDITORA",["CodEditora","NomeEditora","EnderecoEditora","TelefoneEditora"],["CodEditora"]),
+      TB("EDICAO",["ISBN","PrecoEdicao","AnoEdicao","NumPaginas","QtdEstoque","CodLivro","CodEditora"],["ISBN"],[["CodLivro","LIVRO"],["CodEditora","EDITORA"]])], alt:[] } },
+{ id:"concessionaria", titulo:"Concessionária de carros (lista do professor)",
+  texto:`Em uma concessionária são cadastrados cada um dos carros para venda ou já vendidos. Para estes são armazenados: número de chassi, placa, marca, modelo, ano e cor. Cada carro é fornecido por uma montadora. Das montadoras são armazenados CNPJ, nome, endereço e telefone.
+
+Para os clientes são cadastrados: o RG, nome, telefone e endereço. Clientes podem estar cadastrados sem que tenham realizado uma compra. Eventualmente quando fizeram um orçamento ou teste, seus dados foram pedidos.
+
+Para cada venda de carro é registrado um número de nota fiscal, o valor total de venda assim como a forma de pagamento. Cada venda é realizada por um vendedor para o qual é registrado RG, nome, anos de experiência e telefone.
+
+(Cada venda é de um único carro.)`,
+  der:{ entidades:[
+      E("CARRO",["Chassi","Placa","Marca","Modelo","AnoCarro","Cor"],["Chassi"]),
+      E("MONTADORA",["CNPJMontadora","NomeMontadora","EnderecoMontadora","TelefoneMontadora"],["CNPJMontadora"]),
+      E("CLIENTE",["RGCliente","NomeCliente","TelefoneCliente","EnderecoCliente"],["RGCliente"]),
+      E("VENDEDOR",["RGVendedor","NomeVendedor","AnosExperiencia","TelefoneVendedor"],["RGVendedor"]),
+      E("VENDA",["NumNotaFiscal","ValorVenda","FormaPagamento"],["NumNotaFiscal"])],
+    rels:[ R("fornece","MONTADORA","1","CARRO","N"), R("compra","CLIENTE","1","VENDA","N"), R("realiza","VENDEDOR","1","VENDA","N"), R("vendido em","CARRO","1","VENDA","1") ], gens:[] },
+  logico:{ tabelas:[
+      TB("MONTADORA",["CNPJMontadora","NomeMontadora","EnderecoMontadora","TelefoneMontadora"],["CNPJMontadora"]),
+      TB("CARRO",["Chassi","Placa","Marca","Modelo","AnoCarro","Cor","CNPJMontadora"],["Chassi"],[["CNPJMontadora","MONTADORA"]]),
+      TB("CLIENTE",["RGCliente","NomeCliente","TelefoneCliente","EnderecoCliente"],["RGCliente"]),
+      TB("VENDEDOR",["RGVendedor","NomeVendedor","AnosExperiencia","TelefoneVendedor"],["RGVendedor"]),
+      TB("VENDA",["NumNotaFiscal","ValorVenda","FormaPagamento","RGCliente","RGVendedor","Chassi"],["NumNotaFiscal"],[["RGCliente","CLIENTE"],["RGVendedor","VENDEDOR"],["Chassi","CARRO"]])],
+    alt:[[
+      TB("MONTADORA",["CNPJMontadora","NomeMontadora","EnderecoMontadora","TelefoneMontadora"],["CNPJMontadora"]),
+      TB("CARRO",["Chassi","Placa","Marca","Modelo","AnoCarro","Cor","CNPJMontadora","NumNotaFiscal"],["Chassi"],[["CNPJMontadora","MONTADORA"],["NumNotaFiscal","VENDA"]]),
+      TB("CLIENTE",["RGCliente","NomeCliente","TelefoneCliente","EnderecoCliente"],["RGCliente"]),
+      TB("VENDEDOR",["RGVendedor","NomeVendedor","AnosExperiencia","TelefoneVendedor"],["RGVendedor"]),
+      TB("VENDA",["NumNotaFiscal","ValorVenda","FormaPagamento","RGCliente","RGVendedor"],["NumNotaFiscal"],[["RGCliente","CLIENTE"],["RGVendedor","VENDEDOR"]])]],
+    altNota:"No 1:1 entre CARRO e VENDA, a FK pode ficar em qualquer um dos dois lados (regra da aula). A correção aceita os dois." } },
+{ id:"agencia", titulo:"Agência de financiamento (lista do professor)",
+  texto:`Uma agência de financiamento de projetos de pesquisa deseja criar um sistema de banco de dados para gerenciar seu funcionamento. Para cada projeto são cadastrados: um código interno, título, duração do projeto, instituição onde será realizado e área de pesquisa. As áreas de pesquisa estão predefinidas e para cada uma delas são cadastrados código, nome, descrição e um índice que indica sua relevância econômica.
+
+Para cada pesquisador solicitante são cadastrados: RG, CPF, nome, sexo, data de nascimento, grau científico e instituição onde foi alcançado esse título. Note que um mesmo pesquisador pode ter vários projetos em análise. Um pesquisador é cadastrado no sistema unicamente quando o primeiro dos seus projetos é submetido.
+
+A agência recebe os projetos submetidos pelos pesquisadores e associa cada um destes a um assessor que deve aprovar ou não o financiamento. Para estes assessores são cadastrados: RG, CPF, nome, sexo, data de nascimento, grau científico, instituição onde trabalha e as áreas nas quais tem capacidade de avaliar projetos. Estas áreas de pesquisa devem ser definidas dentre a lista de áreas predefinidas antes mencionadas. Um assessor pode ser cadastrado mesmo sem ter analisado nenhum projeto.
+
+Quando um projeto é enviado a um assessor para análise é cadastrada a data deste envio. Posteriormente, quando o assessor retorna sua avaliação são também cadastrados a data de resposta e o resultado de aprovação ou não do projeto.
+
+(Use o CPF como identificador de pesquisadores e assessores.)`,
+  der:{ entidades:[
+      E("PROJETO",["CodProjeto","TituloProjeto","DuracaoProjeto","InstituicaoProjeto"],["CodProjeto"]),
+      E("AREA",["CodArea","NomeArea","DescricaoArea","IndiceRelevancia"],["CodArea"]),
+      E("PESQUISADOR",["CPFPesquisador","RGPesquisador","NomePesquisador","SexoPesquisador","DataNascPesquisador","GrauPesquisador","InstituicaoTitulo"],["CPFPesquisador"]),
+      E("ASSESSOR",["CPFAssessor","RGAssessor","NomeAssessor","SexoAssessor","DataNascAssessor","GrauAssessor","InstituicaoAssessor"],["CPFAssessor"])],
+    rels:[ R("submete","PESQUISADOR","1","PROJETO","N"), R("pertence","AREA","1","PROJETO","N"),
+           R("avalia","ASSESSOR","1","PROJETO","N",["DataEnvio","DataResposta","Resultado"]), R("capacitado em","ASSESSOR","N","AREA","N") ], gens:[] },
+  logico:{ tabelas:[
+      TB("AREA",["CodArea","NomeArea","DescricaoArea","IndiceRelevancia"],["CodArea"]),
+      TB("PESQUISADOR",["CPFPesquisador","RGPesquisador","NomePesquisador","SexoPesquisador","DataNascPesquisador","GrauPesquisador","InstituicaoTitulo"],["CPFPesquisador"]),
+      TB("ASSESSOR",["CPFAssessor","RGAssessor","NomeAssessor","SexoAssessor","DataNascAssessor","GrauAssessor","InstituicaoAssessor"],["CPFAssessor"]),
+      TB("PROJETO",["CodProjeto","TituloProjeto","DuracaoProjeto","InstituicaoProjeto","CPFPesquisador","CodArea","CPFAssessor","DataEnvio","DataResposta","Resultado"],["CodProjeto"],[["CPFPesquisador","PESQUISADOR"],["CodArea","AREA"],["CPFAssessor","ASSESSOR"]]),
+      TB("ASSESSOR_AREA",["CPFAssessor","CodArea"],["CPFAssessor","CodArea"],[["CPFAssessor","ASSESSOR"],["CodArea","AREA"]])], alt:[],
+    altNota:"Os atributos do relacionamento 1:N 'avalia' (DataEnvio, DataResposta, Resultado) vão para o lado N, PROJETO." } },
+{ id:"academia", titulo:"Academia (lista do professor)",
+  texto:`Uma academia de ginástica deseja manter um controle do seu funcionamento. Os alunos são organizados em turmas associadas a um tipo específico de atividade. As informações sobre uma turma são número de alunos, horário da aula, duração da aula, data inicial, data final e tipo de atividade.
+
+Cada turma é orientada por um único instrutor para o qual são cadastrados RG, nome, data de nascimento, titulação e todos os telefones possíveis para sua localização. Um instrutor pode orientar várias turmas que podem ser de diferentes atividades.
+
+Os dados cadastrados dos alunos são: código de matrícula, data da matrícula, nome, endereço, telefone, data de nascimento, altura e peso. Um aluno pode estar matriculado em várias turmas se deseja realizar atividades diferentes e para cada matrícula é mantido um registro das ausências do aluno.
+
+Para cada turma existe um aluno monitor que auxilia o instrutor da turma, sendo que um aluno pode ser monitor no máximo em uma turma.
+
+(Um código artificial CodTurma foi incluído para identificar as turmas.)`,
+  der:{ entidades:[
+      E("TURMA",["CodTurma","NumAlunos","HorarioAula","DuracaoAula","DataInicial","DataFinal","TipoAtividade"],["CodTurma"]),
+      E("INSTRUTOR",["RGInstrutor","NomeInstrutor","DataNascInstrutor","Titulacao","TelefoneInstrutor"],["RGInstrutor"],["TelefoneInstrutor"]),
+      E("ALUNO",["Matricula","DataMatricula","NomeAluno","EnderecoAluno","TelefoneAluno","DataNascAluno","Altura","Peso"],["Matricula"])],
+    rels:[ R("orienta","INSTRUTOR","1","TURMA","N"), R("matricula","ALUNO","N","TURMA","N",["Ausencias"]), R("monitora","ALUNO","1","TURMA","1") ], gens:[] },
+  logico:{ tabelas:[
+      TB("INSTRUTOR",["RGInstrutor","NomeInstrutor","DataNascInstrutor","Titulacao"],["RGInstrutor"]),
+      TB("INSTRUTOR_TELEFONE",["RGInstrutor","TelefoneInstrutor"],["RGInstrutor","TelefoneInstrutor"],[["RGInstrutor","INSTRUTOR"]]),
+      TB("ALUNO",["Matricula","DataMatricula","NomeAluno","EnderecoAluno","TelefoneAluno","DataNascAluno","Altura","Peso"],["Matricula"]),
+      TB("TURMA",["CodTurma","NumAlunos","HorarioAula","DuracaoAula","DataInicial","DataFinal","TipoAtividade","RGInstrutor","Matricula"],["CodTurma"],[["RGInstrutor","INSTRUTOR"],["Matricula","ALUNO"]]),
+      TB("ALUNO_TURMA",["Matricula","CodTurma","Ausencias"],["Matricula","CodTurma"],[["Matricula","ALUNO"],["CodTurma","TURMA"]])],
+    alt:[[
+      TB("INSTRUTOR",["RGInstrutor","NomeInstrutor","DataNascInstrutor","Titulacao"],["RGInstrutor"]),
+      TB("INSTRUTOR_TELEFONE",["RGInstrutor","TelefoneInstrutor"],["RGInstrutor","TelefoneInstrutor"],[["RGInstrutor","INSTRUTOR"]]),
+      TB("ALUNO",["Matricula","DataMatricula","NomeAluno","EnderecoAluno","TelefoneAluno","DataNascAluno","Altura","Peso","CodTurma"],["Matricula"],[["CodTurma","TURMA"]]),
+      TB("TURMA",["CodTurma","NumAlunos","HorarioAula","DuracaoAula","DataInicial","DataFinal","TipoAtividade","RGInstrutor"],["CodTurma"],[["RGInstrutor","INSTRUTOR"]]),
+      TB("ALUNO_TURMA",["Matricula","CodTurma","Ausencias"],["Matricula","CodTurma"],[["Matricula","ALUNO"],["CodTurma","TURMA"]])]],
+    altNota:"O monitor (1:1) pode virar FK Matricula em TURMA ou FK CodTurma em ALUNO; a correção aceita os dois. Telefones do instrutor (multivalorado) viram tabela própria." } },
+{ id:"pecas", titulo:"Loja de peças (lista do professor)",
+  texto:`Uma loja de peças atende pedidos de clientes. A loja mantém um cadastro de todos os clientes com as seguintes informações: RG, CPF, nome, endereço. Um pedido de um cliente contém um número de nota fiscal, valor total e data de realização do pedido e associado a ele todas as mercadorias (peças) incluídas nesse pedido.
+
+Para cada mercadoria que a loja vende são registrados código, descrição, preço e quantidade em estoque. Uma mesma mercadoria pode ser fornecida por vários fornecedores para os quais a loja mantém um registro com um código interno único, nome, endereço e telefone.
+
+Existem fornecedores nacionais e internacionais. Para os fornecedores nacionais além das informações anteriores é mantido o CNPJ e cidade onde foi registrada a empresa. Para os fornecedores internacionais é mantido adicionalmente qual o meio de transporte, país e moeda em que são realizadas as negociações.
+
+(Use o CPF como identificador do cliente.)`,
+  der:{ entidades:[
+      E("CLIENTE",["CPFCliente","RGCliente","NomeCliente","EnderecoCliente"],["CPFCliente"]),
+      E("PEDIDO",["NumNotaFiscal","ValorTotal","DataPedido"],["NumNotaFiscal"]),
+      E("MERCADORIA",["CodMercadoria","DescricaoMercadoria","PrecoMercadoria","QtdEstoque"],["CodMercadoria"]),
+      E("FORNECEDOR",["CodFornecedor","NomeFornecedor","EnderecoFornecedor","TelefoneFornecedor"],["CodFornecedor"]),
+      E("NACIONAL",["CNPJ","CidadeRegistro"],[]),
+      E("INTERNACIONAL",["MeioTransporte","Pais","Moeda"],[])],
+    rels:[ R("faz","CLIENTE","1","PEDIDO","N"), R("contém","PEDIDO","N","MERCADORIA","N"), R("fornece","FORNECEDOR","N","MERCADORIA","N") ],
+    gens:[ {sup:"FORNECEDOR", subs:["NACIONAL","INTERNACIONAL"]} ] },
+  logico:{ tabelas:[
+      TB("CLIENTE",["CPFCliente","RGCliente","NomeCliente","EnderecoCliente"],["CPFCliente"]),
+      TB("PEDIDO",["NumNotaFiscal","ValorTotal","DataPedido","CPFCliente"],["NumNotaFiscal"],[["CPFCliente","CLIENTE"]]),
+      TB("MERCADORIA",["CodMercadoria","DescricaoMercadoria","PrecoMercadoria","QtdEstoque"],["CodMercadoria"]),
+      TB("PEDIDO_MERCADORIA",["NumNotaFiscal","CodMercadoria"],["NumNotaFiscal","CodMercadoria"],[["NumNotaFiscal","PEDIDO"],["CodMercadoria","MERCADORIA"]]),
+      TB("FORNECEDOR",["CodFornecedor","NomeFornecedor","EnderecoFornecedor","TelefoneFornecedor"],["CodFornecedor"]),
+      TB("FORNECEDOR_MERCADORIA",["CodFornecedor","CodMercadoria"],["CodFornecedor","CodMercadoria"],[["CodFornecedor","FORNECEDOR"],["CodMercadoria","MERCADORIA"]]),
+      TB("NACIONAL",["CodFornecedor","CNPJ","CidadeRegistro"],["CodFornecedor"],[["CodFornecedor","FORNECEDOR"]]),
+      TB("INTERNACIONAL",["CodFornecedor","MeioTransporte","Pais","Moeda"],["CodFornecedor"],[["CodFornecedor","FORNECEDOR"]])],
+    alt:[[
+      TB("CLIENTE",["CPFCliente","RGCliente","NomeCliente","EnderecoCliente"],["CPFCliente"]),
+      TB("PEDIDO",["NumNotaFiscal","ValorTotal","DataPedido","CPFCliente"],["NumNotaFiscal"],[["CPFCliente","CLIENTE"]]),
+      TB("MERCADORIA",["CodMercadoria","DescricaoMercadoria","PrecoMercadoria","QtdEstoque"],["CodMercadoria"]),
+      TB("PEDIDO_MERCADORIA",["NumNotaFiscal","CodMercadoria"],["NumNotaFiscal","CodMercadoria"],[["NumNotaFiscal","PEDIDO"],["CodMercadoria","MERCADORIA"]]),
+      TB("FORNECEDOR",["CodFornecedor","NomeFornecedor","EnderecoFornecedor","TelefoneFornecedor","CNPJ","CidadeRegistro","MeioTransporte","Pais","Moeda"],["CodFornecedor"]),
+      TB("FORNECEDOR_MERCADORIA",["CodFornecedor","CodMercadoria"],["CodFornecedor","CodMercadoria"],[["CodFornecedor","FORNECEDOR"],["CodMercadoria","MERCADORIA"]])]],
+    altNota:"A generalização não está nas regras de conversão da aula. A resposta usa uma tabela por subclasse (com a PK da superclasse como PK e FK); a correção também aceita uma tabela FORNECEDOR única com todos os campos." } }
+];
+let CASES = CASES_BASE.concat(store.get("casos_gerados",[]).filter(c=>validCase(c)));
+const caseAttrs = c => { const s=[]; c.der.entidades.forEach(e=>e.attrs.forEach(a=>s.includes(a)||s.push(a))); c.der.rels.forEach(r=>(r.attrs||[]).forEach(a=>s.includes(a)||s.push(a))); return s; };
+const logicAttrs = c => { const s=caseAttrs(c); c.logico.tabelas.forEach(t=>t.attrs.forEach(a=>s.includes(a)||s.push(a))); return s; };
+
+/* ---- correção do DER ---- */
+function gradeDER(c, m){
+  const g=c.der, out=[], ents=g.entidades, gidx=n=>ents.findIndex(e=>e.nome===n);
+  const map=new Map(), used=new Set(); let okE=0, okR=0, okG=0;
+  const enm=e=>(e.nome||"").trim()||"Entidade sem nome";
+  const ename=id=>{ const e=m.ents.find(x=>x.id===id); return e?enm(e):"?"; };
+  m.ents.forEach(e=>{ const i=ents.findIndex((x,j)=>!used.has(j)&&sortKey(x.attrs)===sortKey(e.attrs)); if(i>=0&&e.attrs.length){used.add(i);map.set(e.id,i);} });
+  m.ents.forEach(e=>{
+    if(!e.attrs.length){ out.push(["dica",`${enm(e)}: ainda não tem atributos.`]); return; }
+    if(map.has(e.id)){
+      const ge=ents[map.get(e.id)], errs=[];
+      if(sortKey(e.ids)!==sortKey(ge.ids)){
+        if(!ge.ids.length) errs.push("ela herda o identificador da superclasse, então não marque ID");
+        else if(!e.ids.length) errs.push("falta marcar o identificador (ID)");
+        else errs.push("o identificador não é esse");
+      }
+      const faltaMv=(ge.multi||[]).filter(a=>!e.multi.includes(a)), sobraMv=e.multi.filter(a=>!(ge.multi||[]).includes(a));
+      if(faltaMv.length) errs.push("algum atributo dela pode ter vários valores (marque *)");
+      if(sobraMv.length) errs.push(`${list(sobraMv)} não é multivalorado`);
+      if(errs.length) out.push(["erro",`${enm(e)}: atributos certos, mas ${errs.join("; ")}.`]); else { okE++; out.push(["ok",`${enm(e)}: entidade certa.`]); }
+      return;
+    }
+    if(ents.some(x=>sortKey(x.attrs)===sortKey(e.attrs))){ out.push(["erro",`${enm(e)}: repete outra entidade.`]); return; }
+    let best=-1, bs=0;
+    ents.forEach((x,j)=>{ const inter=e.attrs.filter(a=>x.attrs.includes(a)).length; const sc=inter/new Set([...e.attrs,...x.attrs]).size; if(sc>bs){bs=sc;best=j;} });
+    if(best<0){ out.push(["erro",`${enm(e)}: esses atributos não formam nenhuma entidade do gabarito (podem ser de um relacionamento).`]); return; }
+    const x=ents[best], extra=e.attrs.filter(a=>!x.attrs.includes(a)), falta=x.attrs.filter(a=>!e.attrs.includes(a)), parts=[];
+    if(extra.length) parts.push(`${list(extra)} não pertence${extra.length>1?"m":""} a esta entidade (pode ser de outra entidade ou de um relacionamento)`);
+    if(falta.length) parts.push(`faltam ${falta.length} atributo${falta.length>1?"s":""}`);
+    out.push(["erro",`${enm(e)}: ${parts.join("; ")}.`]);
+  });
+  const usedR=new Set();
+  m.rels.forEach(r=>{
+    const lab=`Relacionamento "${(r.nome||"").trim()||"sem nome"}" (${ename(r.a)}–${ename(r.b)})`;
+    const ga=map.get(r.a), gb=map.get(r.b);
+    if(ga===undefined||gb===undefined){ out.push(["dica",`${lab}: liga entidade que ainda não bate com o gabarito; acerte as entidades primeiro.`]); return; }
+    const cand=g.rels.map((x,j)=>({x,j,a:gidx(x.a),b:gidx(x.b)})).filter(o=>!usedR.has(o.j)&&((o.a===ga&&o.b===gb)||(o.a===gb&&o.b===ga)));
+    if(!cand.length){ out.push(["erro",`${lab}: no gabarito não existe (outro) relacionamento entre essas entidades.`]); return; }
+    const cardOf=gi=> gi===ga ? r.ca : r.cb;
+    const sc=o=>{ const cardsOk = ga===gb ? sortKey([r.ca,r.cb])===sortKey([o.x.ca,o.x.cb]) : (cardOf(o.a)===o.x.ca && cardOf(o.b)===o.x.cb); const attrsOk=sortKey(r.attrs)===sortKey(o.x.attrs||[]); return {cardsOk,attrsOk,s:cardsOk*2+attrsOk}; };
+    cand.sort((p,q)=>sc(q).s-sc(p).s); const best=cand[0], res=sc(best); usedR.add(best.j);
+    const errs=[];
+    if(!res.cardsOk) errs.push(`a cardinalidade não bate (pergunte: cada ${ename(r.a)} se liga a quantos ${ename(r.b)}? e o contrário?)`);
+    if(!res.attrsOk) errs.push((best.x.attrs||[]).length ? "os atributos do relacionamento não estão certos" : "este relacionamento não tem atributos no gabarito");
+    if(errs.length) out.push(["erro",`${lab}: ${errs.join("; ")}.`]); else { okR++; out.push(["ok",`${lab}: certo.`]); }
+  });
+  const usedG=new Set();
+  m.gens.forEach(gn=>{
+    const gs=map.get(gn.sup), subs=gn.subs.map(s=>map.get(s));
+    if(gs===undefined||subs.some(s=>s===undefined)||!subs.length){ out.push(["dica","Generalização: escolha a superclasse e as subclasses, e acerte as entidades delas primeiro."]); return; }
+    const j=g.gens.findIndex((x,k)=>!usedG.has(k)&&gidx(x.sup)===gs);
+    if(j<0){ out.push(["erro",`Generalização de ${ename(gn.sup)}: no gabarito essa entidade não é superclasse.`]); return; }
+    usedG.add(j);
+    if(sortKey(subs.map(String))===sortKey(g.gens[j].subs.map(n=>String(gidx(n))))){ okG++; out.push(["ok",`Generalização de ${ename(gn.sup)}: certa.`]); }
+    else out.push(["erro",`Generalização de ${ename(gn.sup)}: as subclasses não estão certas.`]);
+  });
+  const placed=new Set([...m.ents.flatMap(e=>e.attrs),...m.rels.flatMap(r=>r.attrs)]);
+  const solto=caseAttrs(c).filter(a=>!placed.has(a));
+  if(solto.length) out.push(["dica",`${list(solto)} ainda não ${solto.length>1?"estão":"está"} no diagrama.`]);
+  const fe=ents.length-used.size, fr=g.rels.length-usedR.size, fg=g.gens.length-usedG.size;
+  if(fe>0) out.push(["dica",`Faltam ${fe} ${S(fe,"entidade","entidades")} certas.`]);
+  if(fr>0) out.push(["dica",`O gabarito tem ${g.rels.length} relacionamentos; faltam ${fr}.`]);
+  if(fg>0) out.push(["dica","Falta uma generalização (ISA)."]);
+  const total=ents.length+g.rels.length+g.gens.length, ok=okE+okR+okG;
+  const perfect = ok===total && m.ents.length===ents.length && m.rels.length===g.rels.length && m.gens.length===g.gens.length && !out.some(x=>x[0]==="erro");
+  return {out, ok, total, perfect, scoreText:`${ok} de ${total} elementos certos (entidades, relacionamentos e generalizações).`};
+}
+// monta um DER de usuário igual ao gabarito (para autoteste)
+function derFromGab(c){
+  const ents=c.der.entidades.map((e,i)=>({id:uid("e"),x:40+i*180,y:40,nome:e.nome,attrs:[...e.attrs],ids:[...e.ids],multi:[...(e.multi||[])],assoc:false}));
+  const idOf=n=>ents[c.der.entidades.findIndex(e=>e.nome===n)].id;
+  return {ents, rels:c.der.rels.map(r=>({id:uid("r"),x:200,y:300,nome:r.nome,a:idOf(r.a),b:idOf(r.b),ca:r.ca,cb:r.cb,attrs:[...(r.attrs||[])]})), gens:c.der.gens.map(g=>({id:uid("g"),x:300,y:300,sup:idOf(g.sup),subs:g.subs.map(idOf)}))};
+}
+function validCase(c){
+  try{
+    if(!c||!c.der||!c.logico||!Array.isArray(c.der.entidades)||!Array.isArray(c.der.rels)) return false;
+    c.der.gens=c.der.gens||[]; c.logico.alt=c.logico.alt||[];
+    const names=c.der.entidades.map(e=>e.nome); if(new Set(names).size!==names.length||names.length<2) return false;
+    const seen=new Set();
+    for(const e of c.der.entidades){ e.multi=e.multi||[]; if(!e.attrs.length||e.ids.some(a=>!e.attrs.includes(a))||e.multi.some(a=>!e.attrs.includes(a))) return false; for(const a of e.attrs){ if(seen.has(a)) return false; seen.add(a);} }
+    for(const r of c.der.rels){ r.attrs=r.attrs||[]; if(!names.includes(r.a)||!names.includes(r.b)||!["1","N"].includes(r.ca)||!["1","N"].includes(r.cb)) return false; for(const a of r.attrs){ if(seen.has(a)) return false; seen.add(a);} }
+    for(const g of c.der.gens) if(!names.includes(g.sup)||!g.subs.length||g.subs.some(s=>!names.includes(s))) return false;
+    const pool=new Set(caseAttrs(c)), tn=c.logico.tabelas.map(t=>t.nome);
+    for(const t of c.logico.tabelas){ t.fks=t.fks||[]; if(!t.pk.length||t.pk.some(a=>!t.attrs.includes(a))||t.attrs.some(a=>!pool.has(a))||t.fks.some(f=>!t.attrs.includes(f.attr)||!tn.includes(f.ref))) return false; }
+    if([...pool].some(a=>!c.logico.tabelas.some(t=>t.attrs.includes(a)))) return false;
+    if(!gradeDER(c, derFromGab(c)).perfect) return false;
+    if(!gradeTables(asUserTables(c.logico.tabelas), c.logico.tabelas, {fk:true}).perfect) return false;
+    return true;
+  }catch{ return false; }
+}
+
+/* ================= módulo CONCEITUAL ================= */
+const CON = (()=>{
+  let cur=0, m=null, sel=null, mode=null, pickA=null, selAttr=null;
+  const key=()=>"der:"+CASES[cur].id;
+  const save=()=>store.set(key(),m);
+  function fillSelect(){ $("c-case").replaceChildren(...CASES.map((c,i)=>el("option",{value:i,textContent:(c.gerado?"Novo: ":"")+c.titulo}))); $("c-case").value=cur; }
+  function load(i){ cur=i; m=store.get(key(),null)||{ents:[],rels:[],gens:[]}; m.rels=m.rels.filter(r=>r.a!==r.b); sel=null; mode=null; selAttr=null;
+    $("c-text").textContent=CASES[cur].texto; ["c-fbcard","c-solcard"].forEach(x=>$(x).hidden=true); render(); }
+  const findEnt=id=>m.ents.find(e=>e.id===id);
+  const visibleSpot=()=>{ const w=$("c-wrap"); return {x:w.scrollLeft+40+Math.random()*120, y:w.scrollTop+40+Math.random()*120}; };
+  function addAttr(kind,id,a){
+    m.ents.forEach(e=>{ e.attrs=e.attrs.filter(x=>x!==a); e.ids=e.ids.filter(x=>x!==a); e.multi=e.multi.filter(x=>x!==a); });
+    m.rels.forEach(r=>r.attrs=r.attrs.filter(x=>x!==a));
+    const n = kind==="ent" ? findEnt(id) : m.rels.find(r=>r.id===id);
+    if(n) n.attrs.push(a);
+    selAttr=null; save(); render();
+  }
+  function setStatus(t){ $("c-status").hidden=!t; $("c-status").replaceChildren(); if(t){ $("c-status").append(t+" "); const b=el("button",{type:"button",textContent:"Cancelar"}); b.onclick=()=>{mode=null;pickA=null;setStatus("");render();}; $("c-status").append(b);} }
+  function render(){ renderPool(); renderCanvas(); renderPanel(); }
+  function renderPool(){
+    const placed=new Set([...m.ents.flatMap(e=>e.attrs),...m.rels.flatMap(r=>r.attrs)]);
+    $("c-pool").replaceChildren(...caseAttrs(CASES[cur]).map(a=>{
+      const c=el("button",{className:"chip"+(placed.has(a)?"":" unused"),draggable:true,type:"button"},a);
+      c.setAttribute("aria-pressed",selAttr===a);
+      c.onclick=()=>{ selAttr=selAttr===a?null:a; renderPool(); setStatus(selAttr?`Toque numa entidade ou relacionamento para colocar ${selAttr}.`:""); };
+      c.ondragstart=e=>{ e.dataTransfer.setData("text/plain",a); };
+      return c;
+    }));
+  }
+  function bindNode(d, kind, obj){
+    d.dataset.kind=kind; d.dataset.id=obj.id;
+    d.ondragover=e=>{ e.preventDefault(); d.classList.add("drop"); };
+    d.ondragleave=()=>d.classList.remove("drop");
+    d.ondrop=e=>{ e.preventDefault(); d.classList.remove("drop"); const a=e.dataTransfer.getData("text/plain"); if(a&&kind!=="gen"&&caseAttrs(CASES[cur]).includes(a)) addAttr(kind,obj.id,a); };
+    d.onpointerdown=ev=>{
+      if(ev.button!==0) return;
+      const sx=ev.clientX, sy=ev.clientY, ox=obj.x, oy=obj.y; let moved=false;
+      d.setPointerCapture(ev.pointerId);
+      d.onpointermove=e=>{ const dx=e.clientX-sx, dy=e.clientY-sy; if(!moved&&Math.hypot(dx,dy)<4) return; moved=true;
+        obj.x=Math.max(0,Math.min(1450,ox+dx)); obj.y=Math.max(0,Math.min(960,oy+dy)); d.style.left=obj.x+"px"; d.style.top=obj.y+"px"; drawLines(); };
+      d.onpointerup=()=>{ d.onpointermove=null; d.onpointerup=null; if(moved){ save(); return; } clickNode(kind,obj); };
+    };
+  }
+  function clickNode(kind,obj){
+    if(mode==="rel"){
+      if(kind!=="ent") return;
+      if(!pickA){ pickA=obj.id; setStatus(`Agora toque na segunda entidade.`); renderCanvas(); return; }
+      if(obj.id===pickA) return; // autorrelacionamento desativado: espera outra entidade
+      const A=findEnt(pickA), B=obj;
+      const r={id:uid("r"),x:Math.round((A.x+B.x)/2+80),y:Math.round((A.y+B.y)/2+30),nome:"",a:A.id,b:B.id,ca:"1",cb:"N",attrs:[]};
+      m.rels.push(r); mode=null; pickA=null; setStatus(""); sel={kind:"rel",id:r.id}; save(); render(); return;
+    }
+    if(selAttr && kind!=="gen"){ addAttr(kind,obj.id,selAttr); setStatus(""); return; }
+    sel={kind,id:obj.id}; render();
+  }
+  function renderCanvas(){
+    const cv=$("c-canvas"); cv.querySelectorAll(".node").forEach(n=>n.remove());
+    const isSel=(k,id)=>sel&&sel.kind===k&&sel.id===id;
+    m.ents.forEach(e=>{
+      const d=el("div",{className:"node ent"+(e.assoc?" assoc":"")+(isSel("ent",e.id)?" sel":"")+(mode==="rel"?" pickable":"")});
+      d.style.left=e.x+"px"; d.style.top=e.y+"px";
+      d.append(el("div",{className:"ent-h",textContent:(e.nome||"").trim()||"ENTIDADE"}));
+      const ul=el("ul");
+      e.attrs.forEach(a=>ul.append(el("li",{className:e.ids.includes(a)?"id":"",textContent:(e.multi.includes(a)?"* ":"")+a})));
+      if(!e.attrs.length) ul.append(el("li",{className:"ph",textContent:"sem atributos"}));
+      d.append(ul); bindNode(d,"ent",e); cv.append(d);
+    });
+    m.rels.forEach(r=>{
+      const d=el("div",{className:"node rel"+(isSel("rel",r.id)?" sel":"")});
+      d.style.left=r.x+"px"; d.style.top=r.y+"px";
+      const dia=el("div",{className:"dia"});
+      dia.innerHTML='<svg viewBox="0 0 104 52" preserveAspectRatio="none"><polygon points="52,1 103,26 52,51 1,26"/></svg>';
+      dia.append(el("span",{textContent:(r.nome||"").trim()||"?"}));
+      d.append(dia);
+      if(r.attrs.length) d.append(el("div",{className:"rattrs",textContent:r.attrs.join(", ")}));
+      bindNode(d,"rel",r); cv.append(d);
+    });
+    m.gens.forEach(g=>{
+      const d=el("div",{className:"node gen"+(isSel("gen",g.id)?" sel":"")});
+      d.style.left=g.x+"px"; d.style.top=g.y+"px";
+      d.innerHTML='<svg viewBox="0 0 58 44"><polygon points="29,2 56,42 2,42"/></svg>';
+      d.append(el("span",{textContent:"ISA"}));
+      bindNode(d,"gen",g); cv.append(d);
+    });
+    drawLines();
+  }
+  function rectOf(id){ const n=$("c-canvas").querySelector(`.node[data-id="${id}"]`); const e=findEnt(id); if(!n||!e) return null; return {x:e.x,y:e.y,w:n.offsetWidth,h:n.offsetHeight,cx:e.x+n.offsetWidth/2,cy:e.y+n.offsetHeight/2}; }
+  function edge(rc, px, py){ const dx=px-rc.cx, dy=py-rc.cy; const tx=dx?(rc.w/2)/Math.abs(dx):Infinity, ty=dy?(rc.h/2)/Math.abs(dy):Infinity; const t=Math.min(tx,ty,1); return {x:rc.cx+dx*t,y:rc.cy+dy*t}; }
+  function drawLines(){
+    const svg=$("c-svg"); let h="";
+    const ln=(a,b)=>{ h+=`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"/>`; };
+    const card=(p,from,txt)=>{ const dx=from.x-p.x, dy=from.y-p.y, L=Math.hypot(dx,dy)||1; const x=p.x+dx/L*14-dy/L*9, y=p.y+dy/L*14+dx/L*9; h+=`<text x="${x}" y="${y+4}" text-anchor="middle">${txt}</text>`; };
+    m.rels.forEach(r=>{
+      const A=rectOf(r.a), B=rectOf(r.b); if(!A||!B) return; const c={x:r.x,y:r.y};
+      const pa=edge(A,c.x,c.y), pb=edge(B,c.x,c.y); ln(c,pa); ln(c,pb); card(pa,c,r.ca); card(pb,c,r.cb);
+    });
+    m.gens.forEach(g=>{
+      const top={x:g.x,y:g.y-20}, bot={x:g.x,y:g.y+20};
+      const sp=rectOf(g.sup); if(sp) ln(top, edge(sp,top.x,top.y));
+      g.subs.forEach(s=>{ const r=rectOf(s); if(r) ln(bot, edge(r,bot.x,bot.y)); });
+    });
+    svg.innerHTML=h;
+  }
+  function renderPanel(){
+    const p=$("c-panel"); p.replaceChildren();
+    if(!sel){ p.append(el("p",{className:"label",textContent:"Propriedades"}), el("p",{className:"muted small",style:"margin:0",textContent:"Toque num elemento do diagrama para editar nome, identificador, multivalorado e cardinalidade. Arraste os elementos para organizar."})); return; }
+    if(sel.kind==="ent"){
+      const e=findEnt(sel.id); if(!e){sel=null;return renderPanel();}
+      p.append(el("p",{className:"label",textContent:"Entidade"}));
+      const nm=el("input",{type:"text",value:e.nome,placeholder:"NOME",id:"c-pn"}); nm.oninput=()=>{e.nome=nm.value.toUpperCase(); save(); renderCanvas();};
+      p.append(el("label",{className:"f"},"Nome",nm));
+      const ck=el("input",{type:"checkbox",checked:e.assoc,id:"c-pa"}); ck.onchange=()=>{e.assoc=ck.checked; save(); renderCanvas();};
+      p.append(el("label",{className:"small",style:"display:flex;gap:6px;align-items:center"},ck,"Entidade associativa (losango dentro do retângulo)"));
+      p.append(el("p",{className:"label",style:"margin-top:10px",textContent:"Atributos"}));
+      if(!e.attrs.length) p.append(el("p",{className:"muted small",textContent:"Arraste atributos para a entidade."}));
+      e.attrs.forEach(a=>{
+        const idb=el("button",{className:"tg pk",type:"button",textContent:"ID",title:"Identificador"}); idb.setAttribute("aria-pressed",e.ids.includes(a));
+        idb.onclick=()=>{ e.ids=e.ids.includes(a)?e.ids.filter(x=>x!==a):[...e.ids,a]; save(); render(); };
+        const mv=el("button",{className:"tg fk",type:"button",textContent:"*",title:"Multivalorado"}); mv.setAttribute("aria-pressed",e.multi.includes(a));
+        mv.onclick=()=>{ e.multi=e.multi.includes(a)?e.multi.filter(x=>x!==a):[...e.multi,a]; save(); render(); };
+        const rm=el("button",{className:"x",type:"button",textContent:"×",title:"Tirar"}); rm.onclick=()=>{ e.attrs=e.attrs.filter(x=>x!==a); e.ids=e.ids.filter(x=>x!==a); e.multi=e.multi.filter(x=>x!==a); save(); render(); };
+        p.append(el("div",{className:"prow"},idb,mv,el("span",{className:"nm",textContent:a}),rm));
+      });
+      const del=el("button",{type:"button",textContent:"Excluir entidade",style:"margin-top:10px"});
+      del.onclick=()=>{ m.ents=m.ents.filter(x=>x!==e); m.rels=m.rels.filter(r=>r.a!==e.id&&r.b!==e.id); m.gens.forEach(g=>{ if(g.sup===e.id) g.sup=""; g.subs=g.subs.filter(s=>s!==e.id); }); sel=null; save(); render(); };
+      p.append(del); return;
+    }
+    if(sel.kind==="rel"){
+      const r=m.rels.find(x=>x.id===sel.id); if(!r){sel=null;return renderPanel();}
+      const A=findEnt(r.a), B=findEnt(r.b), an=(A?.nome||"A").trim()||"A", bn=(B?.nome||"B").trim()||"B";
+      p.append(el("p",{className:"label",textContent:`Relacionamento ${an} – ${bn}`}));
+      const nm=el("input",{type:"text",value:r.nome,placeholder:"verbo (ex.: possui)",id:"c-pr"}); nm.oninput=()=>{r.nome=nm.value; save(); renderCanvas();};
+      p.append(el("label",{className:"f"},"Nome",nm));
+      const mk=(val,set)=>{ const s=el("select"); s.append(el("option",{value:"1",textContent:"1"}),el("option",{value:"N",textContent:"N (vários)"})); s.value=val; s.onchange=()=>{set(s.value); save(); renderCanvas();}; return s; };
+      p.append(el("label",{className:"f"},`Cada ${bn} se liga a quantos ${an}?`, mk(r.ca,v=>r.ca=v)));
+      p.append(el("label",{className:"f"},`Cada ${an} se liga a quantos ${bn}?`, mk(r.cb,v=>r.cb=v)));
+      p.append(el("p",{className:"label",style:"margin-top:10px",textContent:"Atributos do relacionamento"}));
+      if(!r.attrs.length) p.append(el("p",{className:"muted small",textContent:"Nenhum. Arraste um atributo para o losango se ele for do relacionamento."}));
+      r.attrs.forEach(a=>{ const rm=el("button",{className:"x",type:"button",textContent:"×"}); rm.onclick=()=>{ r.attrs=r.attrs.filter(x=>x!==a); save(); render(); }; p.append(el("div",{className:"prow"},el("span",{className:"nm",textContent:a}),rm)); });
+      const sw=el("button",{type:"button",textContent:"Trocar lados",style:"margin-top:10px;margin-right:6px"}); sw.onclick=()=>{ [r.a,r.b,r.ca,r.cb]=[r.b,r.a,r.cb,r.ca]; save(); render(); };
+      const del=el("button",{type:"button",textContent:"Excluir relacionamento"}); del.onclick=()=>{ m.rels=m.rels.filter(x=>x!==r); sel=null; save(); render(); };
+      p.append(sw,del); return;
+    }
+    const g=m.gens.find(x=>x.id===sel.id); if(!g){sel=null;return renderPanel();}
+    p.append(el("p",{className:"label",textContent:"Generalização (ISA)"}));
+    const s=el("select",{id:"c-pg"}); s.append(el("option",{value:"",textContent:"escolha…"}), ...m.ents.map(e=>el("option",{value:e.id,textContent:(e.nome||"").trim()||"ENTIDADE"}))); s.value=g.sup;
+    s.onchange=()=>{ g.sup=s.value; g.subs=g.subs.filter(x=>x!==g.sup); save(); render(); };
+    p.append(el("label",{className:"f"},"Superclasse",s), el("p",{className:"small",style:"margin:8px 0 4px",textContent:"Subclasses:"}));
+    m.ents.filter(e=>e.id!==g.sup).forEach(e=>{ const ck=el("input",{type:"checkbox",checked:g.subs.includes(e.id)}); ck.onchange=()=>{ g.subs=ck.checked?[...g.subs,e.id]:g.subs.filter(x=>x!==e.id); save(); renderCanvas(); }; p.append(el("label",{className:"small",style:"display:flex;gap:6px;align-items:center"},ck,(e.nome||"").trim()||"ENTIDADE")); });
+    const del=el("button",{type:"button",textContent:"Excluir generalização",style:"margin-top:10px"}); del.onclick=()=>{ m.gens=m.gens.filter(x=>x!==g); sel=null; save(); render(); };
+    p.append(del);
+  }
+  function derText(c){ const g=c.der; return [
+    ...g.entidades.map(e=>`${e.nome}(${e.attrs.map(a=>(e.ids.includes(a)?a+"[ID]":a)+((e.multi||[]).includes(a)?"[*]":"")).join(", ")})`),
+    ...g.rels.map(r=>`${r.a} ${r.ca} —${r.nome}— ${r.cb} ${r.b}${(r.attrs||[]).length?" atributos: "+list(r.attrs):""}`),
+    ...g.gens.map(x=>`${x.sup} ISA → ${list(x.subs)}`)].join("\n"); }
+  function userText(){ const en=id=>(findEnt(id)?.nome||"?"); return [
+    ...m.ents.map(e=>`${e.nome||"(sem nome)"}${e.assoc?" [associativa]":""}(${e.attrs.map(a=>(e.ids.includes(a)?a+"[ID]":a)+(e.multi.includes(a)?"[*]":"")).join(", ")})`),
+    ...m.rels.map(r=>`${en(r.a)} ${r.ca} —${r.nome||"?"}— ${r.cb} ${en(r.b)}${r.attrs.length?" atributos: "+list(r.attrs):""}`),
+    ...m.gens.map(x=>`${en(x.sup)} ISA → ${list(x.subs.map(en))}`)].join("\n")||"(diagrama vazio)"; }
+  function init(){
+    fillSelect();
+    $("c-case").onchange=e=>load(+e.target.value);
+    $("c-addent").onclick=()=>{ const p=visibleSpot(); const e={id:uid("e"),x:Math.round(p.x),y:Math.round(p.y),nome:"",attrs:[],ids:[],multi:[],assoc:false}; m.ents.push(e); sel={kind:"ent",id:e.id}; save(); render(); setTimeout(()=>$("c-pn")?.focus(),0); };
+    $("c-addrel").onclick=()=>{ if(m.ents.length<1){ setStatus("Crie pelo menos uma entidade antes."); return; } mode="rel"; pickA=null; selAttr=null; setStatus("Toque na primeira entidade do relacionamento."); render(); };
+    $("c-addgen").onclick=()=>{ const p=visibleSpot(); const g={id:uid("g"),x:Math.round(p.x+100),y:Math.round(p.y+120),sup:"",subs:[]}; m.gens.push(g); sel={kind:"gen",id:g.id}; save(); render(); };
+    $("c-clear").onclick=()=>{ if($("c-clear").dataset.confirm){ m={ents:[],rels:[],gens:[]}; sel=null; save(); render(); delete $("c-clear").dataset.confirm; $("c-clear").textContent="Limpar diagrama"; } else { $("c-clear").dataset.confirm="1"; $("c-clear").textContent="Toque de novo para apagar tudo"; setTimeout(()=>{ delete $("c-clear").dataset.confirm; $("c-clear").textContent="Limpar diagrama"; },3000); } };
+    $("c-wrap").addEventListener("pointerdown",e=>{ if(e.target===$("c-canvas")||e.target===$("c-wrap")){ if(sel){ sel=null; renderCanvas(); renderPanel(); } } });
+    $("c-check").onclick=()=>feedback("c", gradeDER(CASES[cur],m), "Tudo certo! O DER bate com o gabarito.");
+    $("c-show").onclick=()=>{ const c=CASES[cur], box=$("c-sol"); box.replaceChildren();
+      const eb=el("div",{className:"sol"}); solCards(eb, c.der.entidades.map(e=>({nome:e.nome+((e.multi||[]).length?"  (* = multivalorado)":""),attrs:e.attrs.map(a=>(e.multi||[]).includes(a)?"*"+a:a),pk:e.ids.map(a=>(e.multi||[]).includes(a)?"*"+a:a)})));
+      const ul=el("ul",{className:"small",style:"margin:6px 0 0;padding-left:18px"});
+      c.der.rels.forEach(r=>ul.append(el("li",{textContent:`${r.a} (${r.ca}) — ${r.nome} — (${r.cb}) ${r.b}${(r.attrs||[]).length?"  · atributos: "+list(r.attrs):""}`})));
+      c.der.gens.forEach(x=>ul.append(el("li",{textContent:`${x.sup} é generalização (ISA) de ${list(x.subs)}`})));
+      box.append(eb, el("p",{className:"label",style:"margin-top:8px",textContent:"Relacionamentos (cardinalidade ao lado de cada entidade)"}), ul);
+      $("c-solcard").hidden=false; $("c-solcard").scrollIntoView({behavior:"smooth",block:"nearest"}); };
+    $("c-ask").onclick=()=>{ const c=CASES[cur], r=gradeDER(c,m);
+      askClaude("c", `Você é monitor de Banco de Dados (modelo conceitual / DER, notação da aula: entidade = retângulo, relacionamento = losango com verbo, cardinalidade 1:1, 1:N, N:N, identificador sublinhado, multivalorado com *, generalização ISA, entidade associativa = losango dentro do retângulo).
+Caso: ${c.titulo}
+${c.texto}
+
+Gabarito do professor/plataforma:
+${derText(c)}
+
+DER do aluno:
+${userText()}
+
+Correção automática (compara com o gabarito): ${r.out.map(o=>o[1]).join(" ")}
+
+Em português do Brasil, texto simples sem markdown, até 160 palavras: diga quais diferenças em relação ao gabarito são ERROS e quais são ALTERNATIVAS DE MODELAGEM aceitáveis segundo o enunciado (seja honesto: modelagem conceitual admite variações). Explique o principal erro com base no enunciado e dê uma dica do próximo passo, sem desenhar o gabarito inteiro.`, $("c-ask")); };
+    $("c-gen").onclick=()=>genCase($("c-gen"), $("c-genmsg"));
+  }
+  return {init, load, render, fillSelect, get cur(){return cur;}, set cur(v){cur=v;}};
+})();
+
+/* ================= módulo LÓGICO ================= */
+const LOG = (()=>{
+  let cur=0, tables=[];
+  const key=()=>"log:"+CASES[cur].id;
+  const board = TableBoard({board:$("l-board"), pool:$("l-pool"), attrs:()=>logicAttrs(CASES[cur]), get:()=>tables, set:v=>{tables=v;}, fk:true, onChange:()=>store.set(key(),tables)});
+  function fillSelect(){ $("l-case").replaceChildren(...CASES.map((c,i)=>el("option",{value:i,textContent:(c.gerado?"Novo: ":"")+c.titulo}))); $("l-case").value=cur; }
+  function load(i){ cur=i; tables=store.get(key(),null)||[board.newTable(),board.newTable()]; board.deselect(); $("l-text").textContent=CASES[cur].texto; ["l-fbcard","l-solcard"].forEach(x=>$(x).hidden=true); board.render(); }
+  const sols=()=>[CASES[cur].logico.tabelas, ...(CASES[cur].logico.alt||[])];
+  function init(){
+    fillSelect();
+    $("l-case").onchange=e=>load(+e.target.value);
+    $("l-check").onclick=()=>feedback("l", gradeBest(tables, sols(), {fk:true, label:"resposta", attrs:logicAttrs(CASES[cur])}), "Tudo certo! O modelo lógico bate com o gabarito.");
+    $("l-show").onclick=()=>{ solCards($("l-sol"), CASES[cur].logico.tabelas); $("l-alt").textContent=CASES[cur].logico.altNota||""; $("l-solcard").hidden=false; $("l-solcard").scrollIntoView({behavior:"smooth",block:"nearest"}); };
+    $("l-reset").onclick=()=>{ tables=[board.newTable(),board.newTable()]; store.set(key(),tables); $("l-fbcard").hidden=true; board.render(); };
+    $("l-ask").onclick=()=>{ const c=CASES[cur], r=gradeBest(tables, sols(), {fk:true, attrs:logicAttrs(c)});
+      const nameOf=id=>{ const t=tables.find(x=>x.id===id); return t?((t.nome||"").trim()||"(sem nome)"):"?"; };
+      const user=tables.filter(t=>t.attrs.length).map(t=>`${(t.nome||"").trim()||"(sem nome)"}(${t.attrs.map(a=>(t.pk.includes(a)?a+"*":a)+(a in t.fk?"→"+nameOf(t.fk[a]):"")).join(", ")})`).join("\n")||"(nenhuma tabela)";
+      askClaude("l", `Você é monitor de Banco de Dados (modelo lógico relacional). Regras da aula: cada entidade vira tabela e o identificador vira PK; 1:1 a FK vai em uma das tabelas; 1:N a FK vai no lado N junto com os atributos do relacionamento; N:N vira tabela com PK composta pelas PKs das duas (que são FKs) e os atributos do relacionamento; multivalorado vira tabela própria.
+Caso: ${c.titulo}
+${c.texto}
+
+Gabarito (* = PK, → = FK):
+${c.logico.tabelas.map(fmtTable).join("\n")}
+${c.logico.altNota||""}
+
+Modelo lógico do aluno:
+${user}
+
+Correção automática: ${r.out.map(o=>o[1]).join(" ")}
+
+Em português do Brasil, texto simples sem markdown, até 160 palavras: diga o que está errado e por quê (cite a regra de conversão), separe o que é alternativa aceitável, e dê a dica do próximo passo sem entregar todas as tabelas.`, $("l-ask")); };
+  }
+  return {init, load, fillSelect, selfTest(){ return CASES_BASE.every(c=>[c.logico.tabelas,...c.logico.alt].every(s=>gradeTables(asUserTables(s), s, {fk:true}).perfect)); }};
+})();
+
+async function genCase(btn, msg){
+  btn.disabled=true; msg.hidden=false; msg.textContent="O Claude está escrevendo um caso novo...";
+  const prompt=`Você cria exercícios de modelagem de banco de dados para alunos de graduação no Brasil (professor usa a notação de Peter Chen e MySQL).
+Crie UM caso de uso novo, com tema diferente destes: ${CASES.map(c=>c.titulo).join("; ")}.
+- Enunciado de 3 a 5 parágrafos, no estilo da lista do professor ("Uma clínica deseja... Para cada X são cadastrados: ..."), com regras claras de cardinalidade (diga se é um ou vários, dos dois lados).
+- 4 a 6 entidades, 3 a 6 relacionamentos (binários), pode ter 1 atributo multivalorado, 1 relacionamento com atributos e no máximo 1 generalização. Sem relacionamentos ternários.
+- Nomes de atributos em CamelCase, sem acentos, ÚNICOS no caso inteiro (ex.: NomeCliente, NomeProduto). Se o enunciado não der código, inclua um artificial e diga isso entre parênteses no fim do enunciado.
+- "ca" é a cardinalidade do lado da entidade "a" (quantos "a" para cada "b") e "cb" a do lado "b"; valores "1" ou "N".
+- Atributos de relacionamento ficam só no relacionamento. Subclasses têm "ids": [].
+- Modelo lógico seguindo as regras: entidade vira tabela (PK = identificador); 1:N põe a FK no lado N com os atributos do relacionamento; 1:1 põe a FK em um dos lados; N:N vira tabela com PK composta pelas duas PKs (ambas FK) + atributos do relacionamento; multivalorado vira tabela (PK da entidade + valor); generalização: uma tabela por subclasse com a PK da superclasse como PK e FK. FK tem o MESMO nome da PK referenciada. Toda coluna do lógico existe no DER.
+Responda só com um objeto JSON neste formato:
+{"titulo":"...","texto":"...","der":{"entidades":[{"nome":"CLIENTE","attrs":["CodCliente","NomeCliente"],"ids":["CodCliente"],"multi":[]}],"rels":[{"nome":"faz","a":"CLIENTE","ca":"1","b":"PEDIDO","cb":"N","attrs":[]}],"gens":[]},"logico":{"tabelas":[{"nome":"CLIENTE","attrs":["CodCliente","NomeCliente"],"pk":["CodCliente"],"fks":[{"attr":"X","ref":"TABELA"}]}]}}`;
+  try{
+    const c=await SAMPLE.json(prompt,{cache:false});
+    if(!validCase(c)) throw {code:"invalid_json"};
+    c.id="g"+Date.now(); c.gerado=true; c.titulo=String(c.titulo||"Caso novo"); c.texto=String(c.texto||"");
+    CASES.push(c); store.set("casos_gerados", CASES.filter(x=>x.gerado));
+    CON.fillSelect(); LOG.fillSelect(); CON.load(CASES.length-1); $("c-case").value=CASES.length-1;
+    msg.textContent="Caso novo carregado: "+c.titulo+". Ele também aparece no módulo Lógico.";
+  }catch(e){ msg.textContent=claudeErr(e); }
+  finally{ btn.disabled=false; }
+}
+
+/* ================= módulo NORMALIZAÇÃO ================= */
+const ETAPAS=["1FN","2FN","3FN"];
+const OBJETIVO={"1FN":"1FN: tire multivalorados, compostos e grupos repetitivos. O grupo vai para uma nova tabela levando a chave da original. Derivados saem.","2FN":"2FN: parta da 1FN. Em chave composta, o que depende só de parte da chave vai para uma nova tabela.","3FN":"3FN: parta da 2FN. O que depende de outro atributo que não é a chave (transitiva) vai para uma nova tabela."};
+const T=(nome,pk,attrs)=>({nome,pk,attrs});
+const DEDUZA="Não há regras escritas: descubra as dependências pelos dados (quais valores sempre aparecem juntos e quais se repetem).";
+const NBANK=[
+{ titulo:"Loja Ferragens (lista do professor)", nivel:"lista", tabela:"VENDAS (NumVend, NumProd, NomeVend, Comissao, AnoContr, NumDep, Gerente, NomeProduto, PrUnit, Quant)", regras:[DEDUZA],
+  attrs:["NumVend","NumProd","NomeVend","Comissao","AnoContr","NumDep","Gerente","NomeProduto","PrUnit","Quant"], derivados:[], grupos:[],
+  exemplo:[["137","19440","João","10","1995","73","Livia","Martelo","17,50","473"],["137","24013","João","10","1995","73","Livia","Serrote","26,25","170"],["137","26722","João","10","1995","73","Livia","Alicate","11,50","688"],["186","16386","Pedro","15","2001","59","Julia","Chave Inglesa","12,95","1475"],["186","19440","Pedro","15","2001","59","Julia","Martelo","17,50","2529"],["186","21765","Pedro","15","2001","59","Julia","Furadeira","32,99","1962"],["186","24013","Pedro","15","2001","59","Julia","Serrote","26,25","3071"],["204","21765","Maria","10","1998","76","Carlos","Furadeira","32,99","809"],["204","26722","Maria","10","1998","76","Carlos","Alicate","11,50","734"],["361","16386","Antonio","20","2001","76","Carlos","Chave Inglesa","12,95","3729"],["361","21765","Antonio","20","2001","76","Carlos","Furadeira","32,99","3110"],["361","26722","Antonio","20","2001","76","Carlos","Alicate","11,50","2738"]],
+  etapas:{"1FN":[T("VENDEDOR",["NumVend"],["NumVend","NomeVend","Comissao","AnoContr","NumDep","Gerente"]),T("VENDEDOR_PRODUTO",["NumVend","NumProd"],["NumVend","NumProd","NomeProduto","PrUnit","Quant"])],
+    "2FN":[T("VENDEDOR",["NumVend"],["NumVend","NomeVend","Comissao","AnoContr","NumDep","Gerente"]),T("VENDEDOR_PRODUTO",["NumVend","NumProd"],["NumVend","NumProd","Quant"]),T("PRODUTO",["NumProd"],["NumProd","NomeProduto","PrUnit"])],
+    "3FN":[T("VENDEDOR",["NumVend"],["NumVend","NomeVend","Comissao","AnoContr","NumDep"]),T("DEPARTAMENTO",["NumDep"],["NumDep","Gerente"]),T("VENDEDOR_PRODUTO",["NumVend","NumProd"],["NumVend","NumProd","Quant"]),T("PRODUTO",["NumProd"],["NumProd","NomeProduto","PrUnit"])]},
+  alt:{"1FN":[[T("VENDAS",["NumVend","NumProd"],["NumVend","NumProd","NomeVend","Comissao","AnoContr","NumDep","Gerente","NomeProduto","PrUnit","Quant"])]]},
+  passos:{"1FN":"Os dados do vendedor se repetem em cada produto vendido: são itens repetitivos. Separe VENDEDOR (chave NumVend); os produtos vendidos levam NumVend e ficam com chave NumVend + NumProd. Também é aceita a tabela única com chave composta (NumVend, NumProd).","2FN":"NomeProduto e PrUnit dependem só de NumProd (o Martelo é sempre 17,50): vão para PRODUTO. Quant depende do vendedor e do produto juntos e fica.","3FN":"Gerente depende de NumDep (73 é sempre Livia, 76 é sempre Carlos): transitiva. Vai para DEPARTAMENTO e NumDep fica em VENDEDOR como FK."}},
+{ titulo:"Chamadas Telefônicas (lista do professor)", nivel:"lista", tabela:"CHAMADAS (NumCham, CodCli, NomeCli, NumLinha, TorreProx, DtInicio, DtFinal, HoraInic, HoraFinal, LinhaCham)", regras:[DEDUZA],
+  attrs:["NumCham","CodCli","NomeCli","NumLinha","TorreProx","DtInicio","DtFinal","HoraInic","HoraFinal","LinhaCham"], derivados:[], grupos:[],
+  exemplo:[["1","1","João","92345678","115","12/10/2008","12/10/2008","14:32:44","14:34:34","92360873"],["2","2","Maria","92360873","142","12/10/2008","12/10/2008","15:00:23","15:10:48","92345678"],["3","3","Pedro","92360523","115","12/10/2008","12/10/2008","15:00:25","15:00:59","87585410"],["4","1","João","87585410","179","12/10/2008","12/10/2008","16:15:14","16:34:55","99568956"],["5","3","Pedro","86532520","148","12/10/2008","12/10/2008","20:05:54","20:15:58","99885522"],["6","4","Antonio","78459652","184","12/10/2008","12/10/2008","22:53:08","23:07:14","93748596"],["7","2","Maria","92360873","165","12/10/2008","13/10/2008","23:55:41","00:15:47","92345678"],["8","4","Antonio","78459652","132","13/10/2008","13/10/2008","00:10:09","00:11:58","92360873"],["9","3","Pedro","86532520","195","13/10/2008","13/10/2008","00:15:55","00:30:12","87968003"],["10","1","João","92345678","199","13/10/2008","13/10/2008","00:20:12","00:22:44","54986230"],["11","1","João","92345678","141","13/10/2008","13/10/2008","00:30:30","00:35:35","55887744"],["12","2","Maria","92360873","187","13/10/2008","13/10/2008","00:48:12","00:59:16","37473949"]],
+  etapas:(()=>{const um=[T("CHAMADA",["NumCham"],["NumCham","CodCli","NomeCli","NumLinha","TorreProx","DtInicio","DtFinal","HoraInic","HoraFinal","LinhaCham"])];return {"1FN":um,"2FN":um,"3FN":[T("CHAMADA",["NumCham"],["NumCham","NumLinha","TorreProx","DtInicio","DtFinal","HoraInic","HoraFinal","LinhaCham"]),T("LINHA",["NumLinha"],["NumLinha","CodCli"]),T("CLIENTE",["CodCli"],["CodCli","NomeCli"])]};})(),
+  passos:{"1FN":"Cada linha já é uma chamada diferente, sem multivalorado nem grupo dentro da linha. Basta escolher a chave: NumCham. Já está na 1FN.","2FN":"A chave é simples, então não existe dependência parcial. Já está na 2FN.","3FN":"NomeCli depende de CodCli, e CodCli depende da linha (92345678 é sempre do cliente 1). Saem LINHA (NumLinha, CodCli) e CLIENTE (CodCli, NomeCli); CHAMADA fica com NumLinha como FK."}},
+{ titulo:"Clínica (lista do professor)", nivel:"desafio", tabela:"EXAMES (idPac, NomePac, CodExame, NomeExame, CodLab, NomeLab, PrecoExame, DataRealizacao, CRM, NomeMedico)", regras:[DEDUZA,"Observe o preço do mesmo exame em laboratórios diferentes."],
+  attrs:["idPac","NomePac","CodExame","NomeExame","CodLab","NomeLab","PrecoExame","DataRealizacao","CRM","NomeMedico"], derivados:[], grupos:[],
+  exemplo:[["1","Matheus","1","hemograma","1","LabX","200","01/09/2015","32345","Dr. Paulo"],["1","Matheus","2","raio X","1","LabX","50","30/08/2015","12678","Dra. Neide"],["2","Suellen","1","hemograma","2","TecLab","180","01/09/2015","32345","Dr. Paulo"],["3","Giovana","3","glicemia","2","TecLab","260","20/08/2015","67544","Dr.Gerson"],["4","Myriam","1","hemograma","1","LabX","200","28/08/2015","32345","Dr. Paulo"],["2","Suellen","4","ultrasson","3","TecImagem","280","02/09/2015","12678","Dra. Neide"],["3","Giovana","1","hemograma","1","LabX","200","13/08/2015","67544","Dr.Gerson"],["5","Anderson","3","glicemia","1","LabX","280","24/08/2015","12678","Dra. Neide"],["5","Anderson","1","hemograma","1","LabX","200","15/08/2015","12678","Dra. Neide"],["6","Valter","5","eletrocardiograma","2","TecLab","180","22/08/2015","45531","Dr. Mauro"],["4","Myriam","4","ultrasson","1","LabX","300","30/07/2015","32345","Dr. Paulo"]],
+  etapas:{"1FN":[T("PACIENTE",["idPac"],["idPac","NomePac"]),T("PACIENTE_EXAME",["idPac","CodExame"],["idPac","CodExame","NomeExame","CodLab","NomeLab","PrecoExame","DataRealizacao","CRM","NomeMedico"])],
+    "2FN":[T("PACIENTE",["idPac"],["idPac","NomePac"]),T("EXAME",["CodExame"],["CodExame","NomeExame"]),T("PACIENTE_EXAME",["idPac","CodExame"],["idPac","CodExame","CodLab","NomeLab","PrecoExame","DataRealizacao","CRM","NomeMedico"])],
+    "3FN":[T("PACIENTE",["idPac"],["idPac","NomePac"]),T("EXAME",["CodExame"],["CodExame","NomeExame"]),T("LABORATORIO",["CodLab"],["CodLab","NomeLab"]),T("MEDICO",["CRM"],["CRM","NomeMedico"]),T("PRECO_EXAME",["CodExame","CodLab"],["CodExame","CodLab","PrecoExame"]),T("PACIENTE_EXAME",["idPac","CodExame"],["idPac","CodExame","CodLab","DataRealizacao","CRM"])]},
+  alt:{"1FN":[[T("EXAMES",["idPac","CodExame"],["idPac","CodExame","NomePac","NomeExame","CodLab","NomeLab","PrecoExame","DataRealizacao","CRM","NomeMedico"])]]},
+  passos:{"1FN":"O nome do paciente se repete a cada exame: separe PACIENTE (chave idPac). Cada paciente faz cada exame uma vez, então a chave do resto fica idPac + CodExame. Também é aceita a tabela única com chave (idPac, CodExame).","2FN":"NomeExame depende só de CodExame (parte da chave): vai para EXAME.","3FN":"NomeLab depende de CodLab, NomeMedico depende de CRM, e o preço depende de exame + laboratório (hemograma: 200 na LabX, 180 na TecLab). Saem LABORATORIO, MEDICO e PRECO_EXAME (CodExame + CodLab)."}},
+{ titulo:"Aluno e disciplinas (exemplo da aula)", nivel:"aula", tabela:"ALUNO (CodAluno, NomeAluno, SexoAluno, NumCurso, NomeCurso, DuracaoCurso,\n  { CodDisciplina, NomeDisciplina, CargaHoraria, Nota1, Nota2, Media } x7 )",
+  regras:["Cada aluno está matriculado em um único curso.","Um aluno cursa várias disciplinas e tem Nota1 e Nota2 em cada uma.","Nome e carga horária dependem só da disciplina.","Media = (Nota1 + Nota2) / 2."],
+  attrs:["CodAluno","NomeAluno","SexoAluno","NumCurso","NomeCurso","DuracaoCurso","CodDisciplina","NomeDisciplina","CargaHoraria","Nota1","Nota2","Media"], derivados:["Media"], grupos:["CodDisciplina","NomeDisciplina","CargaHoraria","Nota1","Nota2","Media"],
+  exemplo:[["1","João","M","10","ADS","6 sem",["C1","C2"],["Banco de Dados","Cálculo"],["80","60"],["8,5","6,0"],["7,5","7,0"],["8,0","6,5"]],["2","Maria","F","10","ADS","6 sem",["C1","C3"],["Banco de Dados","Engenharia"],["80","60"],["4,8","7,0"],["6,8","9,0"],["5,8","8,0"]]],
+  etapas:{"1FN":[T("ALUNO",["CodAluno"],["CodAluno","NomeAluno","SexoAluno","NumCurso","NomeCurso","DuracaoCurso"]),T("ALUNO_DISCIPLINA",["CodAluno","CodDisciplina"],["CodAluno","CodDisciplina","NomeDisciplina","CargaHoraria","Nota1","Nota2"])],
+    "2FN":[T("ALUNO",["CodAluno"],["CodAluno","NomeAluno","SexoAluno","NumCurso","NomeCurso","DuracaoCurso"]),T("ALUNO_DISCIPLINA",["CodAluno","CodDisciplina"],["CodAluno","CodDisciplina","Nota1","Nota2"]),T("DISCIPLINA",["CodDisciplina"],["CodDisciplina","NomeDisciplina","CargaHoraria"])],
+    "3FN":[T("ALUNO",["CodAluno"],["CodAluno","NomeAluno","SexoAluno","NumCurso"]),T("ALUNO_DISCIPLINA",["CodAluno","CodDisciplina"],["CodAluno","CodDisciplina","Nota1","Nota2"]),T("DISCIPLINA",["CodDisciplina"],["CodDisciplina","NomeDisciplina","CargaHoraria"]),T("CURSO",["NumCurso"],["NumCurso","NomeCurso","DuracaoCurso"])]},
+  passos:{"1FN":"O grupo de disciplinas que se repete vai para ALUNO_DISCIPLINA levando CodAluno (chave CodAluno + CodDisciplina). Media sai por ser derivada.","2FN":"NomeDisciplina e CargaHoraria dependem só de CodDisciplina: vão para DISCIPLINA.","3FN":"NomeCurso e DuracaoCurso dependem de NumCurso (transitiva): vão para CURSO; NumCurso fica em ALUNO como FK."}},
+{ titulo:"Nota fiscal (Tarefa 5)", nivel:"3FN", tabela:"NOTA (NumeroNota, DataEmissao, CodCliente, NomeCliente, CidadeCliente,\n  { CodProduto, NomeProduto, PrecoUnitario, Quantidade, ValorItem }*, ValorTotal )",
+  regras:["Cada nota é de um único cliente.","Uma nota tem vários produtos; um produto aparece em várias notas.","O preço é do produto.","ValorItem = Quantidade x PrecoUnitario; ValorTotal = soma dos itens."],
+  attrs:["NumeroNota","DataEmissao","CodCliente","NomeCliente","CidadeCliente","CodProduto","NomeProduto","PrecoUnitario","Quantidade","ValorItem","ValorTotal"], derivados:["ValorItem","ValorTotal"], grupos:["CodProduto","NomeProduto","PrecoUnitario","Quantidade","ValorItem"],
+  exemplo:[["1","2026-03-02","7","Ana Rocha","Campinas",["100","300"],["Produto100","Produto300"],["100,00","300,00"],["10","10"],["1000,00","3000,00"],"4000,00"],["3","2026-03-05","8","Bruno Dias","Santos",["100","200","300"],["Produto100","Produto200","Produto300"],["100,00","200,00","300,00"],["1","1","1"],["100,00","200,00","300,00"],"600,00"]],
+  etapas:{"1FN":[T("NOTA_FISCAL",["NumeroNota"],["NumeroNota","DataEmissao","CodCliente","NomeCliente","CidadeCliente"]),T("ITEM_NOTA",["NumeroNota","CodProduto"],["NumeroNota","CodProduto","NomeProduto","PrecoUnitario","Quantidade"])],
+    "2FN":[T("NOTA_FISCAL",["NumeroNota"],["NumeroNota","DataEmissao","CodCliente","NomeCliente","CidadeCliente"]),T("ITEM_NOTA",["NumeroNota","CodProduto"],["NumeroNota","CodProduto","Quantidade"]),T("PRODUTO",["CodProduto"],["CodProduto","NomeProduto","PrecoUnitario"])],
+    "3FN":[T("NOTA_FISCAL",["NumeroNota"],["NumeroNota","DataEmissao","CodCliente"]),T("CLIENTE",["CodCliente"],["CodCliente","NomeCliente","CidadeCliente"]),T("ITEM_NOTA",["NumeroNota","CodProduto"],["NumeroNota","CodProduto","Quantidade"]),T("PRODUTO",["CodProduto"],["CodProduto","NomeProduto","PrecoUnitario"])]},
+  passos:{"1FN":"Os itens se repetem: vão para ITEM_NOTA com chave NumeroNota + CodProduto. ValorItem e ValorTotal saem por serem derivados.","2FN":"NomeProduto e PrecoUnitario dependem só de CodProduto: vão para PRODUTO.","3FN":"NomeCliente e CidadeCliente dependem de CodCliente: vão para CLIENTE."}}
+];
+function dadosCoerentes(ex){
+  const rows=(ex.exemplo||[]).filter(r=>r.every(v=>!Array.isArray(v))); if(!rows.length) return true;
+  const col=a=>ex.attrs.indexOf(a);
+  return ex.etapas["3FN"].every(t=>{ const seen=new Map(); return rows.every(r=>{ const k=t.pk.map(a=>r[col(a)]).join("|"), v=t.attrs.map(a=>r[col(a)]).join("|"); if(seen.has(k)&&seen.get(k)!==v) return false; seen.set(k,v); return true; }); });
+}
+function validNEx(x){
+  try{
+    if(!x||!Array.isArray(x.attrs)||!Array.isArray(x.regras)||!x.etapas) return false;
+    x.attrs=x.attrs.map(String); const A=new Set(x.attrs); if(A.size!==x.attrs.length||A.size<4) return false;
+    x.derivados=(x.derivados||[]).map(String); const der=new Set(x.derivados); if([...der].some(a=>!A.has(a))) return false;
+    for(const e of ETAPAS){ const sol=x.etapas[e]; if(!Array.isArray(sol)||!sol.length) return false; const used=new Set();
+      for(const t of sol){ if(!Array.isArray(t.attrs)||!Array.isArray(t.pk)||!t.pk.length) return false; t.attrs=t.attrs.map(String); t.pk=t.pk.map(String); t.nome=String(t.nome||"TABELA");
+        if(t.attrs.some(a=>!A.has(a)||der.has(a))||t.pk.some(a=>!t.attrs.includes(a))) return false; t.attrs.forEach(a=>used.add(a)); }
+      if([...A].some(a=>!der.has(a)&&!used.has(a))) return false;
+      if(!gradeTables(asUserTables(sol), sol, {der:x.derivados}).perfect) return false; }
+    x.grupos=(Array.isArray(x.grupos)?x.grupos:[]).map(String);
+    if(!Array.isArray(x.exemplo)||!x.exemplo.every(r=>Array.isArray(r)&&r.length===x.attrs.length)) x.exemplo=[];
+    if(!dadosCoerentes(x)) return false;
+    x.passos=x.passos&&typeof x.passos==="object"?x.passos:{};
+    return true;
+  }catch{ return false; }
+}
+const NOR=(()=>{
+  let exs=NBANK.concat(store.get("norm_gerados",[]).filter(validNEx));
+  let cur=0, etapa="1FN", work={}, done={}, last=null;
+  const board=TableBoard({board:$("n-board"), pool:$("n-pool"), attrs:()=>exs[cur].attrs, get:()=>work[etapa], set:v=>{work[etapa]=v;}, fk:false, onChange:()=>{}});
+  function fillSelect(){ $("n-ex").replaceChildren(...exs.map((e,i)=>el("option",{value:i,textContent:(i>=NBANK.length?"Novo: ":"")+e.titulo}))); $("n-ex").value=cur; }
+  function load(i){ cur=i; done={}; work={}; ETAPAS.forEach(e=>work[e]=[board.newTable(),board.newTable()]);
+    const ex=exs[cur]; $("n-lvl").textContent=ex.nivel||""; $("n-unf").textContent="Notação: "+ex.tabela;
+    $("n-rules").replaceChildren(...ex.regras.map(r=>el("li",{textContent:r}))); drawOriginal(ex); setEtapa("1FN"); }
+  function drawOriginal(ex){
+    const grp=new Set(ex.grupos||[]), der=new Set(ex.derivados||[]);
+    if(!ex.exemplo?.length){ $("n-orig").replaceChildren(el("p",{className:"muted",style:"margin:10px",textContent:"Sem dados de exemplo para este exercício."})); return; }
+    const cls=a=>(grp.has(a)?"g ":"")+(der.has(a)?"d":"");
+    $("n-orig").replaceChildren(el("table",{className:"data"},el("thead",{},el("tr",{},...ex.attrs.map(a=>el("th",{className:cls(a),textContent:a})))),
+      el("tbody",{},...ex.exemplo.map(r=>el("tr",{},...r.map((v,j)=>{ const td=el("td",{className:cls(ex.attrs[j])}); (Array.isArray(v)?v:[v]).forEach(x=>td.append(el("span",{className:"v",textContent:String(x)}))); return td; }))))));
+  }
+  function tabs(){ $("n-tabs").replaceChildren(...ETAPAS.map(e=>{ const b=el("button",{className:"tab",type:"button",role:"tab"},e); if(done[e]) b.append(el("span",{className:"st",textContent:"✓ certa"})); b.setAttribute("aria-selected",e===etapa); b.onclick=()=>setEtapa(e); return b; })); }
+  function setEtapa(e){ etapa=e; board.deselect(); last=null; ["n-fbcard","n-solcard"].forEach(x=>$(x).hidden=true); $("n-goal").textContent=OBJETIVO[e];
+    const prev=ETAPAS[ETAPAS.indexOf(e)-1]; $("n-copy").hidden=!prev; if(prev) $("n-copy").textContent=`Começar com as tabelas da ${prev}`; tabs(); board.render(); }
+  const sols=()=>[exs[cur].etapas[etapa], ...((exs[cur].alt&&exs[cur].alt[etapa])||[])];
+  const grade=()=>gradeBest(work[etapa], sols(), {der:exs[cur].derivados, label:etapa, attrs:exs[cur].attrs});
+  const REGRAS=`Regras de normalização da disciplina: 1FN: sem multivalorado, sem composto, sem grupos repetitivos; o grupo repetido vai para nova tabela com a chave da original (chave composta); derivados saem na 1FN. 2FN: nenhum atributo depende só de parte de uma chave composta. 3FN: nenhum atributo depende de atributo não chave (transitiva); a nova tabela tem como chave o atributo que causava a dependência, que fica como FK.`;
+  function init(){
+    fillSelect();
+    $("n-ex").onchange=e=>load(+e.target.value);
+    $("n-copy").onclick=()=>{ const prev=ETAPAS[ETAPAS.indexOf(etapa)-1]; work[etapa]=clone(work[prev]).map(t=>({...t,id:uid("t")})); $("n-fbcard").hidden=true; board.render(); };
+    $("n-check").onclick=()=>{ const r=grade(); last=r; done[etapa]=r.perfect; r.scoreText=`${r.ok} de ${r.total} tabelas certas na ${etapa}.`; feedback("n", r, `Tudo certo! As tabelas estão na ${etapa}.`); tabs(); };
+    $("n-show").onclick=()=>{ const ex=exs[cur]; $("n-soltitle").textContent="Solução da "+etapa; solCards($("n-sol"), ex.etapas[etapa]);
+      if(etapa==="1FN"&&ex.derivados?.length) $("n-sol").append(el("div",{},el("b",{textContent:"Sai (derivado)"}),list(ex.derivados)));
+      $("n-steps").textContent=ex.passos?.[etapa]||""; $("n-solcard").hidden=false; $("n-solcard").scrollIntoView({behavior:"smooth",block:"nearest"}); };
+    $("n-reset").onclick=()=>{ work[etapa]=[board.newTable(),board.newTable()]; done[etapa]=false; ["n-fbcard","n-solcard"].forEach(x=>$(x).hidden=true); tabs(); board.render(); };
+    $("n-ask").onclick=()=>{ const ex=exs[cur], r=last||grade(), fmt=ts=>ts.filter(t=>t.attrs.length).map(t=>`${t.nome||"(sem nome)"}(${t.attrs.map(a=>t.pk.includes(a)?a+"*":a).join(", ")})`).join("; ")||"(nenhuma)";
+      askClaude("n", `Você é monitor de Banco de Dados ajudando um aluno a normalizar, uma etapa por vez.
+${REGRAS}
+Exercício: ${ex.titulo}
+Tabela não normalizada: ${ex.tabela}
+${ex.exemplo?.length?"Dados: "+ex.exemplo.slice(0,6).map(r=>r.map(v=>Array.isArray(v)?"["+v.join("/")+"]":v).join(" | ")).join(" ; "):""}
+Regras do negócio: ${ex.regras.join(" ")}
+Etapa: ${etapa}. Solução esperada (* = chave; NÃO entregue inteira): ${fmt(ex.etapas[etapa])}
+Tabelas do aluno: ${fmt(work[etapa])}
+Correção automática: ${r.out.map(o=>o[1]).join(" ")}
+Explique em português do Brasil, até 120 palavras, texto simples sem markdown, o que falta para estar na ${etapa} e por quê (multivalorado, grupo repetitivo, chave composta, dependência parcial, transitiva, derivado). Só a ${etapa}. Termine com uma dica. Não dê a solução completa. Se acertou tudo, parabenize em uma frase.`, $("n-ask")); };
+    $("n-gen").onclick=async()=>{ const b=$("n-gen"), msg=$("n-genmsg"); b.disabled=true; msg.hidden=false; msg.textContent="O Claude está montando um exercício novo...";
+      const prompt=`Você cria exercícios de normalização para alunos de graduação no Brasil.
+${REGRAS}
+Crie UM exercício novo, tema diferente destes: ${exs.map(e=>e.titulo).join("; ")}.
+- Modelo das listas do professor: UMA tabela plana, um valor por célula, com dados que se repetem de linha em linha.
+- 8 a 12 atributos CamelCase sem acento, únicos. "exemplo": 8 a 12 linhas, valores string na ordem de "attrs"; tem que dar para descobrir cada dependência pelos dados e eles não podem contradizer a solução.
+- "regras": uma ou duas frases que não entregam as dependências. "derivados": [] e "grupos": [].
+- Solução única em cada etapa; na 1FN separe o dono que se repete; exija mudanças reais na 2FN e na 3FN. Cada atributo aparece em ao menos uma tabela de cada etapa.
+Responda só com JSON: {"titulo":"...","nivel":"3FN","tabela":"NOME (A, B, ...)","regras":["..."],"attrs":["..."],"derivados":[],"grupos":[],"exemplo":[["..."]],"etapas":{"1FN":[{"nome":"X","pk":["A"],"attrs":["A","B"]}],"2FN":[...],"3FN":[...]},"passos":{"1FN":"...","2FN":"...","3FN":"..."}}`;
+      try{ const x=await SAMPLE.json(prompt,{cache:false}); if(!validNEx(x)) throw {code:"invalid_json"}; x.titulo=String(x.titulo||"Exercício novo"); x.tabela=String(x.tabela||""); x.regras=x.regras.map(String);
+        exs.push(x); store.set("norm_gerados", exs.slice(NBANK.length)); fillSelect(); $("n-ex").value=exs.length-1; load(exs.length-1); msg.textContent="Exercício novo carregado: "+x.titulo; }
+      catch(e){ msg.textContent=claudeErr(e); } finally{ b.disabled=false; } };
+  }
+  return {init, load, selfTest(){ return NBANK.every(ex=>dadosCoerentes(ex)&&ETAPAS.every(e=>[ex.etapas[e],...((ex.alt&&ex.alt[e])||[])].every(s=>gradeBest(asUserTables(s),[ex.etapas[e],...((ex.alt&&ex.alt[e])||[])],{der:ex.derivados}).perfect))); }};
+})();
+
+/* ================= módulo SQL ================= */
+const DBS={
+  "ESCOLA":`create table tabalunos(
+ matricula int auto_increment primary key, nome varchar(30) not null, sexo char(1) default "M", datanasc date, curso char(3), nota1 decimal(5,2), nota2 decimal(5,2));
+insert into tabalunos (nome,datanasc,curso,nota1,nota2) values ("Renato Paiva","1998-10-10","ADS",6,7),("Marcelo Guimaraes","1997-10-20","SEG",5,8),("Alexandre Cardoso","1998-01-10","ADS",8,10),("Carlos Carvalho","1996-05-20","SEG",6.5,8.5),("Paulo Pavanini","1995-08-15","ADS",7,9);
+insert into tabalunos (nome,sexo,datanasc,curso,nota1,nota2) values ("Mariana Menezes","F","1998-12-25","ADS",4,8),("Deise Guimaraes","F","1997-01-25","SEG",5,8),("Ana Luiza Santos","F","1996-05-13","JOG",8,8.5),("Vera Mendes","F","1997-11-01","COM",6,6.5),("Juliana Santos","F","1998-08-20","ADS",8,4);`,
+  "EMPRESAABC":`CREATE TABLE DEPTO (NumDepto INT PRIMARY KEY, NomeDepto VARCHAR(20) NOT NULL);
+CREATE TABLE FUNCIONARIO (IdFunc INT PRIMARY KEY, NomeFunc VARCHAR(20) NOT NULL, SexoFunc CHAR(1) CHECK (SexoFunc='F' OR SexoFunc='M'), DataNasc DATE, RGFunc NUMERIC(12), DataAdm DATE, DeptoFunc INT, FOREIGN KEY(DeptoFunc) REFERENCES DEPTO(NumDepto));
+INSERT INTO DEPTO VALUES (1,'Marketing'),(2,'Compras'),(3,'Recursos Humanos');
+INSERT INTO FUNCIONARIO VALUES (100,'Paulo Reis','M','1982-12-12',1234567,'2002-01-01',1),(200,'Sandra Souza','F','1978-10-21',2233445,'2004-10-01',1),(300,'Rui Siqueira','M','1980-05-18',7657890,'2000-05-05',3),(400,'Miriam Dias','F','1990-11-11',3546728,'2008-01-01',1),(500,'Pedro Ramos','M','1986-07-17',2334999,'2007-10-10',NULL),(600,'Daniela Kaz','F','1981-08-21',1112223,'2000-02-02',3),(700,'Fabio Moraes','M','1989-06-15',5555555,'2011-01-01',1);`,
+  "EMPREGADO":`CREATE TABLE FUNCIONARIO (IdFunc INT PRIMARY KEY, NomeFunc VARCHAR(20) NOT NULL, SexoFunc CHAR(1) CHECK (SexoFunc='F' OR SexoFunc='M'), DataNasc DATE, RGFunc NUMERIC(12), DataAdm DATE, Supervisor INT, FOREIGN KEY (Supervisor) REFERENCES FUNCIONARIO (IdFunc));
+INSERT INTO FUNCIONARIO VALUES (100,'Paulo Reis','M','1982-12-12',1234567,'2002-01-01',NULL),(200,'Sandra Souza','F','1978-10-21',2233445,'2004-01-10',100),(300,'Rui Siqueira','M','1980-05-18',7657890,'2000-05-06',100),(400,'Miriam Dias','F','1990-11-11',3546728,'2008-01-01',200),(500,'Pedro Ramos','M','1986-07-17',2334999,'2007-10-10',100),(600,'Daniela Kaz','F','1981-08-21',1112223,'2000-02-02',NULL),(700,'Fabio Moraes','M','1989-06-25',5555555,'2011-01-01',200);`,
+  "VENDAS":`CREATE TABLE Produto (CodProduto int not null primary key, NomeProduto varchar(20) not null, Preco numeric(10,2) not null);
+CREATE TABLE NotaFiscal (NumeroNota numeric(10) primary key, ValorTotal numeric(10,2) default 0);
+CREATE TABLE ItemNota (NumeroNota numeric(10), CodProduto int, Quant int not null check (Quant > 0), primary key (NumeroNota, CodProduto), foreign key (NumeroNota) references NotaFiscal (NumeroNota), foreign key (CodProduto) references Produto (CodProduto));
+INSERT INTO Produto VALUES (100,'Produto100',100.00),(200,'Produto200',200.00),(300,'Produto300',300.00);
+INSERT INTO NotaFiscal VALUES (1,0),(2,0),(3,0);
+INSERT INTO ItemNota VALUES (1,100,10),(1,300,10),(2,200,100),(3,100,1),(3,200,1),(3,300,1);`,
+  "VENDAS (sem ItemNota)":`CREATE TABLE Produto (CodProduto int not null primary key, NomeProduto varchar(20) not null, Preco numeric(10,2) not null);
+CREATE TABLE NotaFiscal (NumeroNota numeric(10) primary key, ValorTotal numeric(10,2) default 0);
+INSERT INTO Produto VALUES (100,'Produto100',100.00),(200,'Produto200',200.00),(300,'Produto300',300.00);
+INSERT INTO NotaFiscal VALUES (1,0),(2,0),(3,0);`,
+  "EMPRESA (EMP)":`CREATE TABLE DEPTO (deptno int primary key, dnome varchar(20));
+CREATE TABLE EMP (empno int primary key, enome varchar(20), efuncao varchar(20), esal numeric(10,2), edatadm date, deptno int, foreign key (deptno) references DEPTO(deptno));
+CREATE TABLE FONES_EMP (empno int, efone varchar(20), primary key (empno, efone), foreign key (empno) references EMP(empno));
+CREATE TABLE GERENTE (empno int primary key, enome varchar(20), esal numeric(10,2));
+INSERT INTO DEPTO VALUES (10,'vendas'),(20,'compras'),(30,'ti'),(40,'juridico');
+INSERT INTO EMP VALUES (1,'Ana','gerente',9000,'2010-03-01',10),(2,'Bruno','vendedor',3500,'2015-06-10',10),(3,'Carla','vendedor',3800,'2012-01-20',10),(4,'Diego','gerente',8500,'2011-09-05',20),(5,'Elisa','comprador',4200,'2018-02-14',20),(6,'Felipe','analista',6000,'2016-07-01',30),(7,'Gabi','analista',6500,'2019-11-11',30),(8,'Hugo','estagiario',1800,'2023-02-01',30);
+INSERT INTO FONES_EMP VALUES (1,'11 99999-0001'),(1,'11 3333-0001'),(4,'11 98888-0004'),(6,'11 97777-0006');`,
+  "VAZIO":``
+};
+const Q=(db,enun,sol,extra={})=>({db,enun,sol,tipo:"select",...extra});
+const M=(db,enun,sol,check)=>({db,enun,sol,tipo:"mut",check});
+const D=(db,enun,sol,checker)=>({db,enun,sol,tipo:"ddl",checker});
+function tinfo(db,t){ const r=db.exec(`SELECT name FROM sqlite_master WHERE type='table' AND lower(name)=lower('${t}')`); if(!r.length) return null; const name=r[0].values[0][0];
+  const cols=(db.exec(`PRAGMA table_info("${name}")`)[0]?.values||[]).map(v=>({name:v[1].toLowerCase(),notnull:!!v[3],pk:v[5]}));
+  const fks=(db.exec(`PRAGMA foreign_key_list("${name}")`)[0]?.values||[]).map(v=>({table:String(v[2]).toLowerCase(),from:String(v[3]).toLowerCase()}));
+  return {name,cols,fks}; }
+function tryExec(db,sql){ db.exec("SAVEPOINT p"); try{ db.exec(sql); return true; }catch{ return false; } finally{ db.exec("ROLLBACK TO p"); db.exec("RELEASE p"); } }
+const SQLEX=[
+  Q("ESCOLA","Mostre o nome e o curso de todos os alunos, em ordem alfabética de nome.","SELECT nome, curso FROM tabalunos ORDER BY nome;",{ordered:true}),
+  Q("ESCOLA","Mostre nome, nota1 e curso dos alunos do curso ADS com nota1 maior ou igual a 6.",`SELECT nome, nota1, curso FROM tabalunos WHERE curso = "ADS" AND nota1 >= 6;`),
+  Q("ESCOLA","Mostre nome e data de nascimento dos alunos cujo nome começa com a letra M.",`SELECT nome, datanasc FROM tabalunos WHERE nome LIKE "M%";`),
+  Q("ESCOLA","Mostre o nome de cada aluno e sua média final ((nota1+nota2)/2) com o apelido Media.","SELECT nome, (nota1+nota2)/2 AS Media FROM tabalunos;"),
+  Q("ESCOLA","Mostre os cursos existentes, sem repetir.","SELECT DISTINCT curso FROM tabalunos;"),
+  Q("ESCOLA","Mostre cada curso e a quantidade de alunos dele.","SELECT curso, COUNT(*) AS total FROM tabalunos GROUP BY curso;"),
+  Q("ESCOLA","Mostre os cursos com mais de 3 alunos e a média das médias ((nota1+nota2)/2) de cada um.","SELECT curso, AVG((nota1+nota2)/2) AS media FROM tabalunos GROUP BY curso HAVING COUNT(*) > 3;"),
+  M("ESCOLA","Aumente em 0,5 a nota2 dos alunos com nota1 menor que 6.","UPDATE tabalunos SET nota2 = nota2 + 0.5 WHERE nota1 < 6;","SELECT matricula, nota2 FROM tabalunos"),
+  M("ESCOLA","Insira a aluna Joana Prado, sexo F, nascida em 1999-04-12, curso ADS, notas 7 e 8 (a matrícula é automática).",`INSERT INTO tabalunos (nome, sexo, datanasc, curso, nota1, nota2) VALUES ("Joana Prado","F","1999-04-12","ADS",7,8);`,"SELECT nome, sexo, datanasc, curso, nota1, nota2 FROM tabalunos"),
+  M("ESCOLA","Exclua os alunos do curso COM.",`DELETE FROM tabalunos WHERE curso = "COM";`,"SELECT matricula FROM tabalunos"),
+  Q("EMPRESAABC","Mostre o nome de cada funcionário e o nome do departamento onde trabalha (só quem tem departamento).","SELECT NomeFunc, NomeDepto FROM FUNCIONARIO INNER JOIN DEPTO ON DeptoFunc = NumDepto;"),
+  Q("EMPRESAABC","Mostre o nome de TODOS os funcionários e o nome do departamento, inclusive quem não tem departamento.","SELECT NomeFunc, NomeDepto FROM FUNCIONARIO LEFT JOIN DEPTO ON DeptoFunc = NumDepto;"),
+  Q("EMPRESAABC","Mostre o nome dos departamentos que não têm nenhum funcionário.","SELECT NomeDepto FROM DEPTO LEFT JOIN FUNCIONARIO ON DeptoFunc = NumDepto WHERE IdFunc IS NULL;"),
+  Q("EMPRESAABC","Mostre o nome de cada departamento e quantos funcionários ele tem (inclusive os que têm zero).","SELECT NomeDepto, COUNT(IdFunc) AS total FROM DEPTO LEFT JOIN FUNCIONARIO ON DeptoFunc = NumDepto GROUP BY NumDepto, NomeDepto;"),
+  Q("EMPREGADO","Mostre o nome de cada funcionário e o nome do seu supervisor imediato (só quem tem supervisor).","SELECT f1.NomeFunc, f2.NomeFunc AS Supervisor FROM FUNCIONARIO f1 INNER JOIN FUNCIONARIO f2 ON f1.Supervisor = f2.IdFunc;"),
+  Q("EMPREGADO","Mostre o nome de TODOS os funcionários e o do supervisor, inclusive quem não tem supervisor.","SELECT f1.NomeFunc, f2.NomeFunc AS Supervisor FROM FUNCIONARIO f1 LEFT JOIN FUNCIONARIO f2 ON f1.Supervisor = f2.IdFunc;"),
+  Q("VENDAS","Mostre número da nota, nome do produto, quantidade, preço e subtotal (quantidade × preço) de cada item.","SELECT it.NumeroNota, p.NomeProduto, it.Quant, p.Preco, it.Quant*p.Preco AS subtotal FROM ItemNota it INNER JOIN Produto p ON it.CodProduto = p.CodProduto;"),
+  Q("VENDAS","Mostre o número de cada nota e o valor total dela (soma dos subtotais).","SELECT it.NumeroNota, SUM(it.Quant*p.Preco) AS total FROM ItemNota it INNER JOIN Produto p ON it.CodProduto = p.CodProduto GROUP BY it.NumeroNota;"),
+  M("VENDAS","Atualize o ValorTotal de cada nota fiscal com a soma dos seus itens (use subconsulta no UPDATE).","UPDATE NotaFiscal SET ValorTotal = (SELECT SUM(i.Quant*p.Preco) FROM ItemNota i INNER JOIN Produto p ON i.CodProduto = p.CodProduto WHERE i.NumeroNota = NotaFiscal.NumeroNota);","SELECT NumeroNota, ValorTotal FROM NotaFiscal"),
+  Q("EMPRESA (EMP)","Mostre todos os dados do funcionário com o maior salário (use subconsulta).","SELECT * FROM EMP WHERE esal = (SELECT MAX(esal) FROM EMP);"),
+  Q("EMPRESA (EMP)","Mostre número, nome e salário de quem ganha menos que a média salarial.","SELECT empno, enome, esal FROM EMP WHERE esal < (SELECT AVG(esal) FROM EMP);"),
+  Q("EMPRESA (EMP)","Mostre nome e função do funcionário mais antigo da empresa (menor data de admissão).","SELECT enome, efuncao FROM EMP WHERE edatadm = (SELECT MIN(edatadm) FROM EMP);"),
+  Q("EMPRESA (EMP)","Mostre número e nome dos funcionários que têm telefone (use EXISTS).","SELECT empno, enome FROM EMP e WHERE EXISTS (SELECT efone FROM FONES_EMP f WHERE e.empno = f.empno);"),
+  Q("EMPRESA (EMP)","Mostre os dados dos departamentos que não têm nenhum funcionário (use NOT IN).","SELECT * FROM DEPTO WHERE deptno NOT IN (SELECT DISTINCT deptno FROM EMP);"),
+  M("EMPRESA (EMP)","Dê 10% de aumento para os funcionários do departamento 'compras' (use subconsulta).","UPDATE EMP SET esal = esal*1.1 WHERE deptno = (SELECT deptno FROM DEPTO WHERE dnome = 'compras');","SELECT empno, esal FROM EMP"),
+  M("EMPRESA (EMP)","Grave na tabela GERENTE o número, nome e salário de quem tem a função 'gerente' (INSERT com SELECT).","INSERT INTO GERENTE SELECT empno, enome, esal FROM EMP WHERE efuncao = 'gerente';","SELECT * FROM GERENTE"),
+  M("EMPRESA (EMP)","Exclua os departamentos que não têm nenhum funcionário (DELETE com subconsulta).","DELETE FROM DEPTO WHERE deptno NOT IN (SELECT DISTINCT deptno FROM EMP);","SELECT deptno FROM DEPTO"),
+  D("VENDAS (sem ItemNota)","Crie a tabela ItemNota (NumeroNota, CodProduto, Quant) com chave primária composta (NumeroNota, CodProduto), chaves estrangeiras para NotaFiscal e Produto, e Quant obrigatória e maior que zero.",
+`CREATE TABLE ItemNota (
+  NumeroNota numeric(10),
+  CodProduto int,
+  Quant int NOT NULL CHECK (Quant > 0),
+  PRIMARY KEY (NumeroNota, CodProduto),
+  FOREIGN KEY (NumeroNota) REFERENCES NotaFiscal(NumeroNota),
+  FOREIGN KEY (CodProduto) REFERENCES Produto(CodProduto)
+);`, db=>{ const t=tinfo(db,"ItemNota"), e=[]; if(!t) return ["A tabela ItemNota não foi criada."];
+  ["numeronota","codproduto","quant"].forEach(c=>{ if(!t.cols.some(x=>x.name===c)) e.push(`Falta a coluna ${c}.`); });
+  const pk=t.cols.filter(x=>x.pk).map(x=>x.name).sort().join(","); if(pk!=="codproduto,numeronota") e.push("A chave primária tem que ser composta por NumeroNota e CodProduto.");
+  if(!t.fks.some(f=>f.from==="numeronota"&&f.table==="notafiscal")) e.push("Falta a FK de NumeroNota para NotaFiscal.");
+  if(!t.fks.some(f=>f.from==="codproduto"&&f.table==="produto")) e.push("Falta a FK de CodProduto para Produto.");
+  const q=t.cols.find(x=>x.name==="quant"); if(q&&!q.notnull) e.push("Quant tem que ser NOT NULL.");
+  if(q&&tryExec(db,`INSERT INTO "${t.name}" (NumeroNota,CodProduto,Quant) VALUES (1,100,0)`)) e.push("Quant = 0 foi aceito: falta o CHECK (Quant > 0).");
+  return e; }),
+  D("VAZIO","Crie DEPTO (NumDepto chave, NomeDepto obrigatório) e FUNCIONARIO (IdFunc chave, NomeFunc obrigatório, SexoFunc que só aceita 'F' ou 'M', DeptoFunc chave estrangeira para DEPTO).",
+`CREATE TABLE DEPTO (
+  NumDepto INT PRIMARY KEY,
+  NomeDepto VARCHAR(20) NOT NULL
+);
+CREATE TABLE FUNCIONARIO (
+  IdFunc INT PRIMARY KEY,
+  NomeFunc VARCHAR(20) NOT NULL,
+  SexoFunc CHAR(1) CHECK (SexoFunc='F' OR SexoFunc='M'),
+  DeptoFunc INT,
+  FOREIGN KEY (DeptoFunc) REFERENCES DEPTO(NumDepto)
+);`, db=>{ const d=tinfo(db,"DEPTO"), f=tinfo(db,"FUNCIONARIO"), e=[]; if(!d) e.push("A tabela DEPTO não foi criada."); if(!f) e.push("A tabela FUNCIONARIO não foi criada."); if(e.length) return e;
+  if(d.cols.find(x=>x.pk)?.name!=="numdepto") e.push("A PK de DEPTO tem que ser NumDepto.");
+  if(!d.cols.find(x=>x.name==="nomedepto")?.notnull) e.push("NomeDepto tem que ser NOT NULL.");
+  if(f.cols.find(x=>x.pk)?.name!=="idfunc") e.push("A PK de FUNCIONARIO tem que ser IdFunc.");
+  if(!f.cols.find(x=>x.name==="nomefunc")?.notnull) e.push("NomeFunc tem que ser NOT NULL.");
+  if(!f.fks.some(x=>x.from==="deptofunc"&&x.table==="depto")) e.push("Falta a FK de DeptoFunc para DEPTO.");
+  if(f.cols.some(x=>x.name==="sexofunc")){ if(tryExec(db,`INSERT INTO "${f.name}" (IdFunc,NomeFunc,SexoFunc) VALUES (999,'Teste','X')`)) e.push("SexoFunc aceitou 'X': falta o CHECK."); } else e.push("Falta a coluna SexoFunc.");
+  return e; }),
+  D("ESCOLA","Acrescente à tabela tabalunos a coluna notaexame do tipo numeric(10,2).","ALTER TABLE tabalunos ADD notaexame numeric(10,2);",
+    db=>{ const t=tinfo(db,"tabalunos"); return t&&t.cols.some(x=>x.name==="notaexame")?[]:["A coluna notaexame não existe em tabalunos."]; }),
+  D("ESCOLA","Crie a view AlunoView com todos os alunos em ordem de nome.","CREATE VIEW AlunoView AS SELECT * FROM tabalunos ORDER BY nome;",
+    db=>{ const r=db.exec("SELECT name FROM sqlite_master WHERE type='view' AND lower(name)='alunoview'"); if(!r.length) return ["A view AlunoView não foi criada."]; const n=db.exec("SELECT COUNT(*) FROM AlunoView")[0].values[0][0]; return n===10?[]:["A view deveria mostrar os 10 alunos."]; })
+];
+function mysqlToSqlite(sql){
+  return sql
+    .replace(/^\s*(create\s+database|drop\s+database|use|show|describe|desc|tee|source)\b[^;]*;?/gim,"")
+    .replace(/\bint(eger)?\s+(not\s+null\s+)?auto_increment\s+primary\s+key/gi,"INTEGER PRIMARY KEY")
+    .replace(/\bint(eger)?\s+primary\s+key\s+auto_increment/gi,"INTEGER PRIMARY KEY")
+    .replace(/\bauto_increment\b/gi,"").replace(/\bunsigned\b/gi,"").replace(/\bengine\s*=\s*\w+/gi,"");
+}
+const SQLM=(()=>{
+  let SQL=null, cur=0, loading=null;
+  const freshDb=name=>{ const db=new SQL.Database(); db.exec("PRAGMA foreign_keys=ON;"); db.exec(mysqlToSqlite(DBS[name])); return db; };
+  function ensure(){
+    if(SQL) return Promise.resolve();
+    // o motor (sql-asm.js) é publicado junto com a página e carregado por <script> fixo, sem CDN
+    if(!loading) loading=typeof window.initSqlJs==="function" ? window.initSqlJs().then(S=>{SQL=S;}) : Promise.reject(new Error("sql-asm.js não carregou"));
+    return loading.then(()=>{ $("s-loading").hidden=true; renderSchema(); }).catch(e=>{ loading=null; $("s-loading").hidden=false; $("s-loading").textContent="Não deu para carregar o simulador de SQL. Recarregue a página. Detalhe: "+(e?.message||e); });
+  }
+  const rowsOf=res=>res?res.values.map(r=>r.map(v=>v===null?"NULL":(typeof v==="number"||(/^-?\d+(\.\d+)?$/.test(v))?(Math.round(Number(v)*100)/100).toString():String(v).trim())).join(" | ")):[];
+  function sameResult(a,b,ordered){
+    if(!a||!b) return {ok:false,why:"Sua consulta não devolveu nenhuma tabela."};
+    if(a.columns.length!==b.columns.length) return {ok:false,why:`A resposta tem ${b.columns.length} coluna(s); a sua tem ${a.columns.length}.`};
+    let ra=rowsOf(a), rb=rowsOf(b);
+    if(ra.length!==rb.length) return {ok:false,why:`A resposta tem ${rb.length} linha(s); a sua tem ${ra.length}.`};
+    if(!ordered){ ra=[...ra].sort(); rb=[...rb].sort(); }
+    if(ra.every((r,i)=>r===rb[i])) return {ok:true};
+    return {ok:false,why:ordered&&[...ra].sort().join()===[...rb].sort().join()?"As linhas estão certas, mas a ordem não.":"Os valores não batem com a resposta esperada (confira filtros e colunas, na mesma ordem pedida)."};
+  }
+  function runOn(name,sql){ const db=freshDb(name); let res=null, err=null; try{ const r=db.exec(mysqlToSqlite(sql)); res=r[r.length-1]||null; }catch(e){ err=e.message; } return {db,res,err}; }
+  function showResult(res,err){
+    const o=$("s-out"); o.hidden=false; o.replaceChildren(el("p",{className:"label",textContent:"Resultado"}));
+    if(err){ o.append(el("div",{className:"err-box",textContent:"Erro: "+err})); return; }
+    if(!res){ o.append(el("p",{className:"muted small",style:"margin:0",textContent:"Comando executado (sem tabela para mostrar)."})); return; }
+    o.append(el("div",{className:"scroll"},el("table",{className:"data"},el("thead",{},el("tr",{},...res.columns.map(c=>el("th",{textContent:c})))),el("tbody",{},...res.values.slice(0,200).map(r=>el("tr",{},...r.map(v=>el("td",{textContent:v===null?"NULL":String(v)}))))))));
+    o.append(el("p",{className:"muted small",style:"margin:6px 0 0",textContent:`${res.values.length} linha(s).`}));
+  }
+  function renderSchema(){
+    const ex=SQLEX[cur]; $("s-dbname").textContent=ex.db; const box=$("s-schema"); box.replaceChildren();
+    if(!SQL) return;
+    const db=freshDb(ex.db), tabs=db.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")[0]?.values.map(v=>v[0])||[];
+    const colsOf=Object.fromEntries(tabs.map(t=>[t,db.exec(`PRAGMA table_info("${t}")`)[0].values.map(v=>v[5]?v[1]+"*":v[1])])); db.close();
+    if(!tabs.length) box.append(el("p",{className:"muted",style:"margin:0",textContent:"Banco vazio: você vai criar as tabelas."}));
+    tabs.forEach(t=>{ const cols=colsOf[t]; const b=el("button",{type:"button",className:"x",style:"font-size:.75rem;color:var(--accent)",textContent:"ver dados"}); b.onclick=()=>{ const d=freshDb(ex.db); const r=d.exec(`SELECT * FROM "${t}"`)[0]||null; d.close(); showResult(r,null); }; box.append(el("div",{},el("b",{textContent:t}),`(${cols.join(", ")}) `,b)); });
+  }
+  function load(i){ cur=i; const ex=SQLEX[cur]; $("s-enun").textContent=ex.enun; $("s-sql").value=store.get("sql:"+cur,""); ["s-out","s-fbcard","s-solcard"].forEach(x=>$(x).hidden=true); renderSchema(); }
+  function check(sql){
+    // cada banco é fechado depois do uso: o motor tem memória limitada e abrir sem fechar estoura (OOM)
+    const ex=SQLEX[cur], u=runOn(ex.db,sql), g=ex.tipo==="ddl"||u.err?null:runOn(ex.db,ex.sol);
+    try{
+      if(u.err) return {perfect:false,out:[["erro","O SQL deu erro: "+u.err]],res:u.res,err:u.err};
+      if(ex.tipo==="select"){ const r=sameResult(u.res,g.res,ex.ordered); return {perfect:r.ok,out:[[r.ok?"ok":"erro",r.ok?"O resultado bate com a resposta esperada.":r.why]],res:u.res}; }
+      if(ex.tipo==="mut"){ const a=u.db.exec(ex.check)[0]||{columns:[],values:[]}, b=g.db.exec(ex.check)[0]||{columns:[],values:[]}; const r=sameResult(a,b,false); return {perfect:r.ok,out:[[r.ok?"ok":"erro",r.ok?"O banco ficou exatamente como esperado.":"O banco não ficou como esperado depois do seu comando: "+r.why.replace("Sua consulta não devolveu nenhuma tabela.","")]],res:u.res}; }
+      const errs=ex.checker(u.db); return {perfect:!errs.length,out:errs.length?errs.map(m=>["erro",m]):[["ok","A estrutura criada está certa."]],res:u.res};
+    } finally { u.db.close(); g?.db.close(); }
+  }
+  function init(){
+    const sel=$("s-ex"); let last=null;
+    SQLEX.forEach((e,i)=>{ if(e.db!==last){ sel.append(el("optgroup",{label:"Banco "+e.db})); last=e.db; } sel.lastChild.append(el("option",{value:i,textContent:`${i+1}. ${e.enun.length>70?e.enun.slice(0,68)+"…":e.enun}`})); });
+    sel.onchange=e=>load(+e.target.value);
+    $("s-sql").oninput=()=>store.set("sql:"+cur,$("s-sql").value);
+    $("s-sql").onkeydown=e=>{ if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){ e.preventDefault(); $("s-run").click(); } };
+    $("s-run").onclick=async()=>{ await ensure(); if(!SQL) return; try{ const r=runOn(SQLEX[cur].db,$("s-sql").value); r.db.close(); showResult(r.res,r.err); }catch(e){ showResult(null,e.message); } };
+    $("s-check").onclick=async()=>{ await ensure(); if(!SQL) return; const r=check($("s-sql").value); showResult(r.res,r.err); feedback("s",{...r,scoreText:"Ainda não."},"Certo!"); };
+    $("s-show").onclick=()=>{ $("s-sol").textContent=SQLEX[cur].sol; $("s-solcard").hidden=false; };
+    $("s-ask").onclick=async()=>{ await ensure(); const ex=SQLEX[cur], r=SQL?check($("s-sql").value):{out:[]};
+      askClaude("s", `Você é monitor de SQL (MySQL, aula de Banco de Dados). O aluno pratica num simulador SQLite (ANY/ALL e MODIFY não funcionam lá).
+Banco: ${ex.db}
+Estrutura: ${DBS[ex.db].split("\n").filter(l=>/create/i.test(l)).join(" ").slice(0,1500)}
+Exercício: ${ex.enun}
+Uma resposta correta: ${ex.sol}
+SQL do aluno: ${$("s-sql").value||"(vazio)"}
+Resultado da correção: ${r.out.map(o=>o[1]).join(" ")}
+Em português do Brasil, texto simples sem markdown, até 120 palavras: explique o que está errado no SQL do aluno (ou por que está certo), aponte a cláusula a corrigir e dê uma dica, sem colar a resposta inteira.`, $("s-ask")); };
+  }
+  return {init, load, ensure, selfTest(){ return SQLEX.map((ex,i)=>{ cur=i; const r=check(ex.sol); return r.perfect?null:`${i+1}: ${r.out.map(o=>o[1]).join(" ")}`; }).filter(Boolean); }};
+})();
+
+/* ================= navegação ================= */
+const VIEWS=["teoria","conceitual","logico","normalizacao","sql"];
+let started={};
+function route(){
+  const v=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):"teoria";
+  VIEWS.forEach(x=>{ $("v-"+x).hidden=x!==v; });
+  document.querySelectorAll("#nav a").forEach(a=>a.setAttribute("aria-current",a.getAttribute("href")==="#"+v?"page":"false"));
+  if(!started[v]){ started[v]=true;
+    if(v==="conceitual") CON.load(0);
+    if(v==="logico") LOG.load(0);
+    if(v==="normalizacao") NOR.load(0);
+    if(v==="sql"){ SQLM.load(0); SQLM.ensure(); }
+  } else if(v==="conceitual") CON.render();
+}
+CON.init(); LOG.init(); NOR.init(); SQLM.init();
+window.addEventListener("hashchange",route); route(); initClaude();
+
+// autotestes: cada gabarito (e alternativa) passa na própria correção
+console.assert(CASES_BASE.every(c=>validCase(clone(c))), "caso do banco inválido");
+console.assert(LOG.selfTest(), "gabarito lógico inválido");
+console.assert(NOR.selfTest(), "gabarito de normalização inválido");
+</script>
+
+</body></html>
